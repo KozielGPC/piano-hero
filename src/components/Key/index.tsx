@@ -7,10 +7,16 @@ interface IProps {
 }
 
 export const Key = ({ note, type }: IProps) => {
+	const playSound = () => {
+		const audio = new Audio(`/sounds/${note}.mp3`);
+		audio.play();
+	};
+
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === note) {
-				alert(event.key);
+				console.log(event.key);
+				playSound();
 			}
 		};
 
@@ -23,21 +29,21 @@ export const Key = ({ note, type }: IProps) => {
 	const isWhite = type === "white";
 	const keyStyles = isWhite
 		? {
-				width: "40px",
+				width: "60px",
 				height: "150px",
 				backgroundColor: "white",
 				color: "black",
 				border: "1px solid black",
 		  }
 		: {
-				width: "30px",
+				width: "40px",
 				height: "100px",
 				backgroundColor: "black",
 				color: "white",
 				border: "1px solid black",
 				position: "absolute",
 				top: "0px",
-				left: "30px",
+				left: "40px",
 				zIndex: "1",
 		  };
 
