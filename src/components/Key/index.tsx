@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NoteType } from "../../utils/constants";
 
 interface IProps {
@@ -9,6 +9,8 @@ interface IProps {
 }
 
 export const Key = ({ note, type, fileName }: IProps) => {
+	const [isPressed, setIsPressed] = useState(false);
+
 	const playSound = () => {
 		const audio = new Audio(`/sounds/${fileName}`);
 		audio.play();
@@ -17,14 +19,22 @@ export const Key = ({ note, type, fileName }: IProps) => {
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === note) {
-				console.log(event.key);
+				setIsPressed(true);
 				playSound();
 			}
 		};
 
+		const handleKeyUp = (event: KeyboardEvent) => {
+			if (event.key === note) {
+				setIsPressed(false);
+			}
+		};
+
 		addEventListener("keydown", handleKeyDown);
+		addEventListener("keyup", handleKeyUp);
 		return () => {
 			removeEventListener("keydown", handleKeyDown);
+			removeEventListener("keyup", handleKeyUp);
 		};
 	}, [note]);
 
@@ -34,14 +44,14 @@ export const Key = ({ note, type, fileName }: IProps) => {
 		? {
 				width: "60px",
 				height: "150px",
-				backgroundColor: "white",
+				backgroundColor: isPressed ? "#ddd" : "white",
 				color: "black",
 				border: "1px solid black",
 		  }
 		: {
 				width: "40px",
 				height: "100px",
-				backgroundColor: "black",
+				backgroundColor: isPressed ? "#333" : "black",
 				color: "white",
 				border: "1px solid black",
 				position: "absolute",
@@ -61,6 +71,9 @@ export const Key = ({ note, type, fileName }: IProps) => {
 				cursor: "pointer",
 				boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.2)",
 			}}
+			onMouseDown={() => setIsPressed(true)}
+			onMouseUp={() => setIsPressed(false)}
+			onClick={playSound}
 		>
 			{note}
 		</Box>
