@@ -4,7 +4,7 @@ import { NoteType } from "../../utils/constants";
 
 interface IProps {
 	note: string;
-	type: string;
+	type: NoteType;
 	fileName: string;
 }
 
