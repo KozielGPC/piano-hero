@@ -1,5 +1,6 @@
 import { Box, Container, CssBaseline, Typography } from "@mui/material";
 import { Piano } from "./components/Piano";
+import { NoteContainer } from "./components/NoteContainer";
 
 function App() {
 	return (
@@ -18,9 +19,17 @@ function App() {
 				<Typography variant="h1" sx={{ fontSize: "5rem" }}>
 					<strong>Piano Hero</strong>
 				</Typography>
-				{/* <Box sx={{ my: 4, backgroundColor: "white", color: "black" }}> */}
-				<Piano />
-				{/* </Box> */}
+				<Box
+					sx={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						justifyContent: "center",
+					}}
+				>
+					<NoteContainer />
+					<Piano />
+				</Box>
 			</Container>
 		</>
 	);

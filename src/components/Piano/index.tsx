@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { Key } from "../Key";
-import { keys } from "../../components/Piano/keys";
+import { keys } from "../../utils/constants";
 
 export const Piano = () => {
 	return (

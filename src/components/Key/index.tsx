@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { useEffect } from "react";
-import { NoteType } from "../Piano/keys";
+import { NoteType } from "../../utils/constants";
 
 interface IProps {
 	note: string;
