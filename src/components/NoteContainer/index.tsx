@@ -3,12 +3,20 @@ import { Box } from "@mui/material";
 import { ScrollingNote } from "../ScrollingNote";
 import { keys } from "../../utils/constants";
 
+interface INotes {
+	note: string;
+	offset: number;
+}
+
 export const NoteContainer = () => {
-	const [notes, setNotes] = useState<string[]>([]);
+	const [notes, setNotes] = useState<INotes[]>([]);
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			const possibleNotes = keys.map((key) => key.note);
+			const possibleNotes = keys.map((key) => ({
+				note: key.note,
+				offset: key.offset,
+			}));
 			const randomNote =
 				possibleNotes[Math.floor(Math.random() * possibleNotes.length)];
 			setNotes((prevNotes) => [...prevNotes, randomNote]);
@@ -32,7 +40,11 @@ export const NoteContainer = () => {
 			}}
 		>
 			{notes.map((note, index) => (
-				<ScrollingNote key={index} note={note} />
+				<ScrollingNote
+					key={index}
+					note={note.note}
+					leftOffset={note.offset * 40}
+				/>
 			))}
 		</Box>
 	);
