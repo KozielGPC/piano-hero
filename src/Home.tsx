@@ -18,10 +18,9 @@ function App() {
 				<Typography variant="h1" sx={{ fontSize: "5rem" }}>
 					<strong>Piano Hero</strong>
 				</Typography>
-				<Box sx={{ my: 4, backgroundColor: "white", color: "black" }}>
-					Piano here
-					<Piano />
-				</Box>
+				{/* <Box sx={{ my: 4, backgroundColor: "white", color: "black" }}> */}
+				<Piano />
+				{/* </Box> */}
 			</Container>
 		</>
 	);

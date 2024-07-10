@@ -1,14 +1,16 @@
 import { Box } from "@mui/material";
 import { useEffect } from "react";
+import { NoteType } from "../Piano/keys";
 
 interface IProps {
 	note: string;
 	type: string;
+	fileName: string;
 }
 
-export const Key = ({ note, type }: IProps) => {
+export const Key = ({ note, type, fileName }: IProps) => {
 	const playSound = () => {
-		const audio = new Audio(`/sounds/${note}.mp3`);
+		const audio = new Audio(`/sounds/${fileName}`);
 		audio.play();
 	};
 
@@ -26,7 +28,8 @@ export const Key = ({ note, type }: IProps) => {
 		};
 	}, [note]);
 
-	const isWhite = type === "white";
+	const isWhite = type === NoteType.white;
+
 	const keyStyles = isWhite
 		? {
 				width: "60px",

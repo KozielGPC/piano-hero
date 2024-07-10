@@ -1,23 +1,8 @@
 import { Box } from "@mui/material";
 import { Key } from "../Key";
+import { keys } from "../../components/Piano/keys";
 
 export const Piano = () => {
-	const keys = [
-		{ note: "a", type: "white" },
-		{ note: "w", type: "black" },
-		{ note: "s", type: "white" },
-		{ note: "e", type: "black" },
-		{ note: "d", type: "white" },
-		{ note: "f", type: "white" },
-		{ note: "t", type: "black" },
-		{ note: "g", type: "white" },
-		{ note: "y", type: "black" },
-		{ note: "h", type: "white" },
-		{ note: "u", type: "black" },
-		{ note: "j", type: "white" },
-		{ note: "k", type: "white" },
-	];
-
 	return (
 		<Box
 			sx={{
@@ -35,7 +20,7 @@ export const Piano = () => {
 		>
 			{keys.map((key, index) => (
 				<Box key={index} sx={{ position: "relative" }}>
-					<Key note={key.note} type={key.type} />
+					<Key note={key.note} type={key.type} fileName={key.fileName} />
 				</Box>
 			))}
 		</Box>
