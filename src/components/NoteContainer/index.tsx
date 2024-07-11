@@ -1,32 +1,54 @@
-import { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { ScrollingNote } from "../ScrollingNote";
-import { keys, NoteType } from "../../utils/constants";
+import { NoteType } from "../../utils/constants";
 
 interface INotes {
 	note: string;
 	offset: number;
 	type: NoteType;
+	displayAftertimeSeconds: number;
 }
 
+const notes: INotes[] = [
+	{
+		offset: -5,
+		note: "d",
+		type: NoteType.white,
+		displayAftertimeSeconds: 1,
+	},
+	{
+		offset: -1,
+		note: "g",
+		type: NoteType.white,
+		displayAftertimeSeconds: 1,
+	},
+	{
+		offset: -5,
+		note: "d",
+		type: NoteType.white,
+		displayAftertimeSeconds: 5,
+	},
+	{
+		offset: -3,
+		note: "f",
+		type: NoteType.white,
+		displayAftertimeSeconds: 8,
+	},
+	{
+		offset: 0.5,
+		note: "t",
+		type: NoteType.black,
+		displayAftertimeSeconds: 10,
+	},
+	{
+		offset: 7,
+		note: "u",
+		type: NoteType.black,
+		displayAftertimeSeconds: 10,
+	},
+];
+
 export const NoteContainer = () => {
-	const [notes, setNotes] = useState<INotes[]>([]);
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			const possibleNotes = keys.map((key) => ({
-				note: key.note,
-				offset: key.offset,
-				type: key.type,
-			}));
-			const randomNote =
-				possibleNotes[Math.floor(Math.random() * possibleNotes.length)];
-			setNotes((prevNotes) => [...prevNotes, randomNote]);
-		}, 1000);
-
-		return () => clearInterval(interval);
-	}, []);
-
 	return (
 		<Box
 			sx={{
@@ -52,6 +74,7 @@ export const NoteContainer = () => {
 						note={note.note}
 						type={note.type}
 						leftOffset={note.offset}
+						displayAftertimeSeconds={note.displayAftertimeSeconds}
 					/>
 				))}
 			</Box>
