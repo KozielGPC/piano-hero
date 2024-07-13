@@ -3,6 +3,9 @@ import { Key } from "../Key";
 import { keys } from "../../utils/constants";
 
 export const Piano = () => {
+	const handleCorrectNoteClick = () => {
+		console.log("Correct note clicked!");
+	};
 	return (
 		<Box
 			sx={{
@@ -20,7 +23,12 @@ export const Piano = () => {
 		>
 			{keys.map((key, index) => (
 				<Box key={index} sx={{ position: "relative" }}>
-					<Key note={key.note} type={key.type} fileName={key.fileName} />
+					<Key
+						note={key.note}
+						type={key.type}
+						fileName={key.fileName}
+						onCorrectNoteClick={handleCorrectNoteClick}
+					/>
 				</Box>
 			))}
 		</Box>

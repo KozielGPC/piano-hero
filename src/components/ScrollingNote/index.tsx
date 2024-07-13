@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 import { NoteType } from "../../utils/constants";
 import { useEffect, useState } from "react";
+import { useNoteContext } from "../../context/NotesContext";
 
 interface IProps {
 	note: string;
@@ -17,6 +18,8 @@ export const ScrollingNote = ({
 }: IProps) => {
 	const [isVisible, setIsVisible] = useState(false);
 
+	const { addNote, removeNote } = useNoteContext();
+
 	useEffect(() => {
 		const renderComponent = () => {
 			setIsVisible(true);
@@ -31,14 +34,19 @@ export const ScrollingNote = ({
 			setIsVisible(false);
 		};
 
-		const timeoutHide = setTimeout(
-			hideComponent,
-			(displayAftertimeSeconds + 2.8) * 1000
-		);
+		const timeoutHide = setTimeout(() => {
+			removeNote(note);
+			hideComponent();
+		}, (displayAftertimeSeconds + 2.8) * 1000);
+
+		const timeoutClick = setTimeout(() => {
+			addNote({ note, leftOffset });
+		}, (displayAftertimeSeconds + 2.3) * 1000);
 
 		return () => {
 			clearTimeout(timeoutDisplay);
 			clearTimeout(timeoutHide);
+			clearTimeout(timeoutClick);
 		};
 	}, []);
 
@@ -48,7 +56,7 @@ export const ScrollingNote = ({
 		? {
 				position: "absolute",
 				width: "60px",
-				height: "150px",
+				height: "50px",
 				backgroundColor: "white",
 				color: "black",
 				border: "1px solid black",
@@ -57,7 +65,7 @@ export const ScrollingNote = ({
 		  }
 		: {
 				width: "40px",
-				height: "100px",
+				height: "50px",
 				backgroundColor: "black",
 				color: "white",
 				border: "1px solid black",

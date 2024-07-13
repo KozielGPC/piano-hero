@@ -1,14 +1,18 @@
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { NoteType } from "../../utils/constants";
+import { useNoteContext } from "../../context/NotesContext";
 
 interface IProps {
 	note: string;
 	type: NoteType;
 	fileName: string;
+	onCorrectNoteClick: () => void;
 }
 
-export const Key = ({ note, type, fileName }: IProps) => {
+export const Key = ({ note, type, fileName, onCorrectNoteClick }: IProps) => {
+	const { activeNotes } = useNoteContext();
+
 	const [isPressed, setIsPressed] = useState(false);
 
 	const playSound = () => {
@@ -21,6 +25,11 @@ export const Key = ({ note, type, fileName }: IProps) => {
 			if (event.key === note) {
 				setIsPressed(true);
 				playSound();
+				if (activeNotes.find((n) => n.note === note)) {
+					onCorrectNoteClick();
+				} else {
+					console.log("wrong note");
+				}
 			}
 		};
 
@@ -36,7 +45,7 @@ export const Key = ({ note, type, fileName }: IProps) => {
 			removeEventListener("keydown", handleKeyDown);
 			removeEventListener("keyup", handleKeyUp);
 		};
-	}, [note]);
+	}, [note, activeNotes, onCorrectNoteClick]);
 
 	const isWhite = type === NoteType.white;
 

@@ -23,10 +23,10 @@ const notes: INotes[] = [
 		displayAftertimeSeconds: 1,
 	},
 	{
-		offset: -5,
-		note: "d",
+		offset: -3,
+		note: "f",
 		type: NoteType.white,
-		displayAftertimeSeconds: 5,
+		displayAftertimeSeconds: 1,
 	},
 	{
 		offset: -3,

@@ -1,6 +1,7 @@
 import { Box, Container, CssBaseline, Typography } from "@mui/material";
 import { Piano } from "./components/Piano";
 import { NoteContainer } from "./components/NoteContainer";
+import { NoteProvider } from "./context/NotesContext";
 
 function App() {
 	return (
@@ -27,8 +28,10 @@ function App() {
 						justifyContent: "center",
 					}}
 				>
-					<NoteContainer />
-					<Piano />
+					<NoteProvider>
+						<NoteContainer />
+						<Piano />
+					</NoteProvider>
 				</Box>
 			</Container>
 		</>
