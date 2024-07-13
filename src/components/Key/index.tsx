@@ -11,7 +11,7 @@ interface IProps {
 }
 
 export const Key = ({ note, type, fileName, onCorrectNoteClick }: IProps) => {
-	const { activeNotes } = useNoteContext();
+	const { activeNotes, addCorrectNote, addWrongNote } = useNoteContext();
 
 	const [isPressed, setIsPressed] = useState(false);
 
@@ -26,9 +26,9 @@ export const Key = ({ note, type, fileName, onCorrectNoteClick }: IProps) => {
 				setIsPressed(true);
 				playSound();
 				if (activeNotes.find((n) => n.note === note)) {
-					onCorrectNoteClick();
+					addCorrectNote();
 				} else {
-					console.log("wrong note");
+					addWrongNote();
 				}
 			}
 		};

@@ -2,8 +2,9 @@ import { Box, Container, CssBaseline, Typography } from "@mui/material";
 import { Piano } from "./components/Piano";
 import { NoteContainer } from "./components/NoteContainer";
 import { NoteProvider } from "./context/NotesContext";
+import { Score } from "./components/Score";
 
-function App() {
+export const Home = () => {
 	return (
 		<>
 			<CssBaseline />
@@ -29,6 +30,7 @@ function App() {
 					}}
 				>
 					<NoteProvider>
+						<Score />
 						<NoteContainer />
 						<Piano />
 					</NoteProvider>
@@ -36,6 +38,4 @@ function App() {
 			</Container>
 		</>
 	);
-}
-
-export default App;
+};
