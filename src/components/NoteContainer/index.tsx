@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ScrollingNote } from "../ScrollingNote";
-import { NoteType } from "../../utils/constants";
+import { NoteType, notes } from "../../utils/constants";
 
 interface INotes {
 	note: string;
@@ -9,42 +9,34 @@ interface INotes {
 	displayAftertimeSeconds: number;
 }
 
-const notes: INotes[] = [
+const scrollingNotes: INotes[] = [
 	{
-		offset: -5,
-		note: "d",
-		type: NoteType.white,
+		...notes.G,
+		displayAftertimeSeconds: 0,
+	},
+	{
+		...notes.D,
 		displayAftertimeSeconds: 1,
 	},
 	{
-		offset: -1,
-		note: "g",
-		type: NoteType.white,
-		displayAftertimeSeconds: 1,
+		...notes.S,
+		displayAftertimeSeconds: 3,
 	},
 	{
-		offset: -3,
-		note: "f",
-		type: NoteType.white,
-		displayAftertimeSeconds: 1,
+		...notes.F,
+		displayAftertimeSeconds: 3,
 	},
 	{
-		offset: -3,
-		note: "f",
-		type: NoteType.white,
+		...notes.F,
+		displayAftertimeSeconds: 5,
+	},
+	{
+		...notes.T,
+		displayAftertimeSeconds: 7,
+	},
+	{
+		...notes.U,
 		displayAftertimeSeconds: 8,
-	},
-	{
-		offset: 0.5,
-		note: "t",
-		type: NoteType.black,
-		displayAftertimeSeconds: 10,
-	},
-	{
-		offset: 7,
-		note: "u",
-		type: NoteType.black,
-		displayAftertimeSeconds: 10,
 	},
 ];
 
@@ -68,7 +60,7 @@ export const NoteContainer = () => {
 					position: "relative",
 				}}
 			>
-				{notes.map((note, index) => (
+				{scrollingNotes.map((note, index) => (
 					<ScrollingNote
 						key={index}
 						note={note.note}
