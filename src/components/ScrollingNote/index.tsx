@@ -2,20 +2,13 @@ import { Box } from "@mui/material";
 import { NoteType } from "../../utils/constants";
 import { useEffect, useRef, useState } from "react";
 import { useNoteContext } from "../../context/NotesContext";
+import { INotes } from "../../utils/interfaces";
 
 interface IProps {
-	note: string;
-	leftOffset: number;
-	type: NoteType;
-	displayAftertimeSeconds: number;
+	note: INotes;
 }
 
-export const ScrollingNote = ({
-	note,
-	leftOffset,
-	type,
-	displayAftertimeSeconds,
-}: IProps) => {
+export const ScrollingNote = ({ note }: IProps) => {
 	const [isVisible, setIsVisible] = useState(false);
 
 	const { addNote, removeNote, targetDivRef } = useNoteContext();
@@ -26,9 +19,9 @@ export const ScrollingNote = ({
 
 	useEffect(() => {
 		if (hasCollided) {
-			addNote({ note, leftOffset });
+			addNote({ note: note.note, leftOffset: note.offset });
 		} else {
-			removeNote(note);
+			removeNote(note.note);
 		}
 	}, [hasCollided]);
 
@@ -88,7 +81,7 @@ export const ScrollingNote = ({
 
 		const timeoutDisplay = setTimeout(
 			renderComponent,
-			displayAftertimeSeconds * 1000
+			note.displayAftertimeSeconds * 1000
 		);
 
 		const hideComponent = () => {
@@ -96,9 +89,9 @@ export const ScrollingNote = ({
 		};
 
 		const timeoutHide = setTimeout(() => {
-			removeNote(note);
+			removeNote(note.note);
 			hideComponent();
-		}, (displayAftertimeSeconds + 2.8) * 1000);
+		}, (note.displayAftertimeSeconds + 2.8) * 1000);
 
 		return () => {
 			clearTimeout(timeoutDisplay);
@@ -106,7 +99,7 @@ export const ScrollingNote = ({
 		};
 	}, []);
 
-	const isWhite = type === NoteType.white;
+	const isWhite = note.type === NoteType.white;
 
 	const keyStyles = isWhite
 		? {
@@ -117,7 +110,7 @@ export const ScrollingNote = ({
 				color: "black",
 				border: "1px solid black",
 				margin: "2px",
-				marginLeft: `${leftOffset * 32}px`,
+				marginLeft: `${note.offset * 32}px`,
 		  }
 		: {
 				width: "40px",
@@ -126,7 +119,7 @@ export const ScrollingNote = ({
 				color: "white",
 				border: "1px solid black",
 				margin: "2px",
-				marginLeft: `${leftOffset * 20}px`,
+				marginLeft: `${note.offset * 20}px`,
 				zIndex: "1",
 		  };
 
@@ -144,7 +137,7 @@ export const ScrollingNote = ({
 			}}
 			ref={movingDivRef}
 		>
-			{note}
+			{note.note}
 		</Box>
 	);
 };

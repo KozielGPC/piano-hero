@@ -5,7 +5,7 @@ interface NoteContextType {
 	activeNotes: IActiveNote[];
 	score: IScore;
 	addWrongNote: () => void;
-	addCorrectNote: () => void;
+	addCorrectNote: (note: string) => void;
 	addNote: (input: IActiveNote) => void;
 	removeNote: (noteToBeRemoved: string) => void;
 	targetDivRef: React.RefObject<HTMLDivElement> | null;
@@ -47,11 +47,15 @@ export const NoteProvider = ({ children }: { children: React.ReactNode }) => {
 		}));
 	};
 
-	const addCorrectNote = () => {
+	const addCorrectNote = (note: string) => {
 		setScore((prevScore) => ({
 			...prevScore,
 			correctNotes: prevScore.correctNotes + 1,
 		}));
+
+		setActiveNotes((prevNotes) => {
+			return prevNotes.filter((item) => item.note !== note);
+		});
 	};
 
 	return (

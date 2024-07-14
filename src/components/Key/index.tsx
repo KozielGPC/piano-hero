@@ -25,7 +25,7 @@ export const Key = ({ note, type, fileName }: IProps) => {
 				setIsPressed(true);
 				playSound();
 				if (activeNotes.find((n) => n.note === note)) {
-					addCorrectNote();
+					addCorrectNote(note);
 				} else {
 					addWrongNote();
 				}
