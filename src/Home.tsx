@@ -3,6 +3,10 @@ import { Piano } from "./components/Piano";
 import { NoteContainer } from "./components/NoteContainer";
 import { NoteProvider } from "./context/NotesContext";
 import { Score } from "./components/Score";
+import NoteCanvas from "./components/Fabric";
+import { CanvasProvider } from "./context/CanvasContext";
+import { ScrollingNoteFabric } from "./components/ScrollingNoteFabric";
+import { Canvas } from "./components/Canvas";
 
 export const Home = () => {
 	return (
@@ -30,6 +34,11 @@ export const Home = () => {
 					}}
 				>
 					<NoteProvider>
+						<CanvasProvider>
+							{/* <Canvas /> */}
+							{/* <ScrollingNoteFabric /> */}
+							<NoteCanvas />
+						</CanvasProvider>
 						<Score />
 						<NoteContainer />
 						<Piano />
