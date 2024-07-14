@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 import { IActiveNote, IScore } from "../utils/interfaces";
 
 interface NoteContextType {
@@ -8,6 +8,7 @@ interface NoteContextType {
 	addCorrectNote: () => void;
 	addNote: (input: IActiveNote) => void;
 	removeNote: (noteToBeRemoved: string) => void;
+	targetDivRef: React.RefObject<HTMLDivElement> | null;
 }
 
 const NoteContext = createContext<NoteContextType>({
@@ -17,9 +18,12 @@ const NoteContext = createContext<NoteContextType>({
 	addCorrectNote: () => {},
 	addNote: () => {},
 	removeNote: () => {},
+	targetDivRef: null,
 });
 
 export const NoteProvider = ({ children }: { children: React.ReactNode }) => {
+	const targetDivRef = useRef<HTMLDivElement | null>(null);
+
 	const [activeNotes, setActiveNotes] = useState<IActiveNote[]>([]);
 	const [score, setScore] = useState<IScore>({
 		correctNotes: 0,
@@ -59,6 +63,7 @@ export const NoteProvider = ({ children }: { children: React.ReactNode }) => {
 				score,
 				addWrongNote,
 				addCorrectNote,
+				targetDivRef,
 			}}
 		>
 			{children}

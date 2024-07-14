@@ -52,7 +52,6 @@ export const NoteContainer = () => {
 				justifyContent: "center",
 				overflow: "hidden",
 				border: "2px solid black",
-				marginBottom: "20px",
 			}}
 		>
 			<Box
