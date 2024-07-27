@@ -12,6 +12,7 @@ export const Home = () => {
 	return (
 		<>
 			<CssBaseline />
+
 			<Container
 				sx={{
 					textAlign: "center",

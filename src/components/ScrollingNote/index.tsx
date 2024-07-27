@@ -1,24 +1,78 @@
 import { Box } from "@mui/material";
 import { NoteType } from "../../utils/constants";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNoteContext } from "../../context/NotesContext";
+import { INotes } from "../../utils/interfaces";
 
 interface IProps {
-	note: string;
-	leftOffset: number;
-	type: NoteType;
-	displayAftertimeSeconds: number;
+	note: INotes;
 }
 
-export const ScrollingNote = ({
-	note,
-	leftOffset,
-	type,
-	displayAftertimeSeconds,
-}: IProps) => {
+export const ScrollingNote = ({ note }: IProps) => {
 	const [isVisible, setIsVisible] = useState(false);
 
-	const { addNote, removeNote } = useNoteContext();
+	const { addNote, removeNote, targetDivRef } = useNoteContext();
+
+	const movingDivRef = useRef<HTMLDivElement | null>(null);
+
+	const [hasCollided, setHasCollided] = useState(false);
+
+	useEffect(() => {
+		if (hasCollided) {
+			addNote({ note: note.note, leftOffset: note.offset });
+		} else {
+			removeNote(note.note);
+		}
+	}, [hasCollided]);
+
+	useEffect(() => {
+		if (isVisible) {
+			const movingDiv = movingDivRef!.current;
+			const targetDiv = targetDivRef!.current;
+			let animationFrameId: number;
+
+			const checkCollision = () => {
+				const movingDivRect = movingDiv!.getBoundingClientRect();
+				const targetDivRect = targetDiv!.getBoundingClientRect();
+
+				if (
+					movingDivRect.x < targetDivRect.x + targetDivRect.width &&
+					movingDivRect.x + movingDivRect.width > targetDivRect.x &&
+					movingDivRect.y < targetDivRect.y + targetDivRect.height &&
+					movingDivRect.y + movingDivRect.height > targetDivRect.y
+				) {
+					setHasCollided(true);
+				} else {
+					setHasCollided(false);
+				}
+			};
+
+			const animate = () => {
+				const startTime = performance.now();
+
+				const step = (timestamp: number) => {
+					const progress = Math.min((timestamp - startTime) / 5000, 1);
+					movingDiv!.style.transform = `translateY(${
+						progress * (window.innerHeight - 100)
+					}px)`;
+
+					checkCollision();
+
+					if (progress < 1) {
+						animationFrameId = requestAnimationFrame(step);
+					}
+				};
+
+				animationFrameId = requestAnimationFrame(step);
+			};
+
+			animate();
+
+			return () => {
+				cancelAnimationFrame(animationFrameId);
+			};
+		}
+	}, [isVisible]);
 
 	useEffect(() => {
 		const renderComponent = () => {
@@ -27,7 +81,7 @@ export const ScrollingNote = ({
 
 		const timeoutDisplay = setTimeout(
 			renderComponent,
-			displayAftertimeSeconds * 1000
+			note.displayAftertimeSeconds * 1000
 		);
 
 		const hideComponent = () => {
@@ -35,22 +89,17 @@ export const ScrollingNote = ({
 		};
 
 		const timeoutHide = setTimeout(() => {
-			removeNote(note);
+			removeNote(note.note);
 			hideComponent();
-		}, (displayAftertimeSeconds + 2.8) * 1000);
-
-		const timeoutClick = setTimeout(() => {
-			addNote({ note, leftOffset });
-		}, (displayAftertimeSeconds + 2.3) * 1000);
+		}, (note.displayAftertimeSeconds + 2.8) * 1000);
 
 		return () => {
 			clearTimeout(timeoutDisplay);
 			clearTimeout(timeoutHide);
-			clearTimeout(timeoutClick);
 		};
 	}, []);
 
-	const isWhite = type === NoteType.white;
+	const isWhite = note.type === NoteType.white;
 
 	const keyStyles = isWhite
 		? {
@@ -61,7 +110,7 @@ export const ScrollingNote = ({
 				color: "black",
 				border: "1px solid black",
 				margin: "2px",
-				marginLeft: `${leftOffset * 32}px`,
+				marginLeft: `${note.offset * 32}px`,
 		  }
 		: {
 				width: "40px",
@@ -70,7 +119,7 @@ export const ScrollingNote = ({
 				color: "white",
 				border: "1px solid black",
 				margin: "2px",
-				marginLeft: `${leftOffset * 20}px`,
+				marginLeft: `${note.offset * 20}px`,
 				zIndex: "1",
 		  };
 
@@ -85,18 +134,10 @@ export const ScrollingNote = ({
 				boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.2)",
 				display: "flex",
 				justifyContent: "center",
-				animation: "scroll 3s linear infinite",
-				"@keyframes scroll": {
-					from: {
-						top: 0,
-					},
-					to: {
-						top: "100%",
-					},
-				},
 			}}
+			ref={movingDivRef}
 		>
-			{note}
+			{note.note}
 		</Box>
 	);
 };

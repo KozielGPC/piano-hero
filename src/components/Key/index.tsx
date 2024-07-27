@@ -7,10 +7,9 @@ interface IProps {
 	note: string;
 	type: NoteType;
 	fileName: string;
-	onCorrectNoteClick: () => void;
 }
 
-export const Key = ({ note, type, fileName, onCorrectNoteClick }: IProps) => {
+export const Key = ({ note, type, fileName }: IProps) => {
 	const { activeNotes, addCorrectNote, addWrongNote } = useNoteContext();
 
 	const [isPressed, setIsPressed] = useState(false);
@@ -26,7 +25,7 @@ export const Key = ({ note, type, fileName, onCorrectNoteClick }: IProps) => {
 				setIsPressed(true);
 				playSound();
 				if (activeNotes.find((n) => n.note === note)) {
-					addCorrectNote();
+					addCorrectNote(note);
 				} else {
 					addWrongNote();
 				}
@@ -45,7 +44,7 @@ export const Key = ({ note, type, fileName, onCorrectNoteClick }: IProps) => {
 			removeEventListener("keydown", handleKeyDown);
 			removeEventListener("keyup", handleKeyUp);
 		};
-	}, [note, activeNotes, onCorrectNoteClick]);
+	}, [note, activeNotes]);
 
 	const isWhite = type === NoteType.white;
 
