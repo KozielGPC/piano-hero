@@ -35,13 +35,13 @@ export const Home = () => {
 					}}
 				>
 					<NoteProvider>
-						<CanvasProvider>
-							{/* <Canvas /> */}
-							{/* <ScrollingNoteFabric /> */}
-							<NoteCanvas />
-						</CanvasProvider>
+						{/* <CanvasProvider> */}
+						{/* <Canvas /> */}
+						{/* <ScrollingNoteFabric /> */}
+						{/* </CanvasProvider> */}
 						<Score />
-						<NoteContainer />
+						{/* <NoteContainer /> */}
+						<NoteCanvas />
 						<Piano />
 					</NoteProvider>
 				</Box>

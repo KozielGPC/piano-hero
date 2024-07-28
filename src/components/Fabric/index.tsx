@@ -1,59 +1,125 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
+import { INotes } from "../../utils/interfaces";
+import { NoteType, notes } from "../../utils/constants";
+import { Box } from "@mui/material";
+import { useNoteContext } from "../../context/NotesContext";
 // import { useCanvasContext } from "../../context/CanvasContext";
 
-const NoteCanvas: React.FC = () => {
-	// const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
-	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+const scrollingNotes: INotes[] = [
+	// {
+	// 	...notes.G,
+	// 	displayAftertimeSeconds: 0,
+	// },
+	// {
+	// 	...notes.D,
+	// 	displayAftertimeSeconds: 1,
+	// },
+	{
+		...notes.S,
+		displayAftertimeSeconds: 3,
+	},
+	{
+		...notes.F,
+		displayAftertimeSeconds: 3,
+	},
+	// {
+	// 	...notes.F,
+	// 	displayAftertimeSeconds: 5,
+	// },
+	// {
+	// 	...notes.T,
+	// 	displayAftertimeSeconds: 7,
+	// },
+	// {
+	// 	...notes.U,
+	// 	displayAftertimeSeconds: 8,
+	// },
+];
 
+const NoteCanvas: React.FC = () => {
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const notesRef = useRef<fabric.Rect[]>([]);
+
+	const { addNote, removeNote, targetDivRef } = useNoteContext();
+	
 	useEffect(() => {
 		if (canvasRef.current) {
-			const canvas = new fabric.Canvas(canvasRef.current);
-			canvas.height = 400;
+			const canvas = new fabric.StaticCanvas(canvasRef.current);
+			canvas.height = 200;
 			canvas.width = 800;
 
-			const note = new fabric.Rect({
+			const checkpoint = new fabric.Rect({
 				left: 100,
-				top: 100,
-				fill: "blue",
-				width: 60,
+				top: 190,
+				opacity: 0.5,
+				width: 800,
 				height: 50,
+				fill: "#eee",
 			});
 
-			const note2 = new fabric.Rect({
-				left: 200,
-				top: 100,
-				fill: "red",
-				width: 60,
-				height: 50,
+			canvas.add(checkpoint);
+
+			scrollingNotes.forEach((note) => {
+				const fabricNote = new fabric.Rect({
+					left: note.offset * 32 + 550,
+					top: 0,
+					fill: note.type === NoteType.black ? "black" : "white",
+					width: 60,
+					height: 50,
+					strokeWidth: 1,
+					stroke: "black",
+				});
+
+				fabricNote.on("moving", () => {
+					fabricNote.setCoords();
+					canvas.renderAll();
+				});
+
+				fabricNote.animate(
+					{
+						top: 200,
+					},
+					{
+						delay: note.displayAftertimeSeconds * 1000,
+						duration: 3000,
+						onChange: () => {
+							fabricNote.setCoords();
+							canvas.renderAll();
+							if (checkpoint.isOverlapping(fabricNote)) {
+								addNote({ note: note.note, leftOffset: note.offset });
+							}
+						},
+						onComplete: () => {
+							canvas.remove(fabricNote);
+							fabricNote.setCoords();
+							fabricNote.dispose();
+							notesRef.current = notesRef.current.filter((n) => n !== fabricNote);
+							canvas.renderAll();
+							removeNote(note.note);
+						},
+					},
+				);
+
+				canvas.add(fabricNote);
+				notesRef.current.push(fabricNote);
 			});
 
-			const note3 = new fabric.Rect({
-				left: 100,
-				top: 200,
-				opacity: 0.1,
-				width: 600,
-				height: 200,
-			});
 			
 
-			note2.animate(
-				{
-					top: 300,
-				},
-				{
-					duration: 3000,
-					onChange: canvas.renderAll.bind(canvas),
-					onComplete: () => console.log("completed"),
-				}
-			);
+			const handleKeyDown = () => {
+				const isOverlapping = () => {
+					let isOverlapping = false;
+					notesRef.current.forEach((note) => {
+						if (checkpoint.isOverlapping(note)) {
+							isOverlapping = true;
+						}
+					});
 
-			canvas.add(note);
-			canvas.add(note2);
-			canvas.add(note3);
+					return isOverlapping;
+				};
 
-			const handleKeyDown = (event: KeyboardEvent) => {
-				if (note3.isOverlapping(note2)) {
+				if (isOverlapping()) {
 					console.log("is overlapping");
 				} else {
 					console.log("is not overlapping");
@@ -69,7 +135,21 @@ const NoteCanvas: React.FC = () => {
 		}
 	}, []);
 
-	return <canvas ref={canvasRef} />;
+	return (
+		<Box
+			sx={{
+				position: "relative",
+				display: "flex",
+				margin: "auto",
+				justifyContent: "center",
+				width: "100%",
+				height: 200,
+				backgroundColor: "#eee"
+			}}
+		>
+			<canvas ref={canvasRef} />
+		</Box>
+	);
 };
 
 export default NoteCanvas;
