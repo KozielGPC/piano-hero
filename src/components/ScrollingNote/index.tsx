@@ -52,9 +52,7 @@ export const ScrollingNote = ({ note }: IProps) => {
 
 				const step = (timestamp: number) => {
 					const progress = Math.min((timestamp - startTime) / 5000, 1);
-					movingDiv!.style.transform = `translateY(${
-						progress * (window.innerHeight - 100)
-					}px)`;
+					movingDiv!.style.transform = `translateY(${progress * (window.innerHeight - 100)}px)`;
 
 					checkCollision();
 
@@ -79,10 +77,7 @@ export const ScrollingNote = ({ note }: IProps) => {
 			setIsVisible(true);
 		};
 
-		const timeoutDisplay = setTimeout(
-			renderComponent,
-			note.displayAftertimeSeconds * 1000
-		);
+		const timeoutDisplay = setTimeout(renderComponent, note.displayAftertimeSeconds * 1000);
 
 		const hideComponent = () => {
 			setIsVisible(false);

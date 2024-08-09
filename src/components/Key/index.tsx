@@ -50,22 +50,22 @@ export const Key = ({ note, type, fileName }: IProps) => {
 
 	const keyStyles = isWhite
 		? {
-				width: "60px",
-				height: isPressed ? "145px" : "150px",
-				backgroundColor: isPressed ? "#ddd" : "white",
-				color: "black",
-				border: "1px solid black",
+			width: "60px",
+			height: isPressed ? "145px" : "150px",
+			backgroundColor: isPressed ? "#ddd" : "white",
+			color: "black",
+			border: "1px solid black",
 		  }
 		: {
-				width: "40px",
-				height: isPressed ? "95px" : "100px",
-				backgroundColor: isPressed ? "#333" : "black",
-				color: "white",
-				border: "1px solid black",
-				position: "absolute",
-				top: "0px",
-				left: "40px",
-				zIndex: "1",
+			width: "40px",
+			height: isPressed ? "95px" : "100px",
+			backgroundColor: isPressed ? "#333" : "black",
+			color: "white",
+			border: "1px solid black",
+			position: "absolute",
+			top: "0px",
+			left: "40px",
+			zIndex: "1",
 		  };
 
 	return (
