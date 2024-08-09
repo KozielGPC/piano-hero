@@ -57,9 +57,10 @@ const NoteCanvas: React.FC = () => {
 
 	useEffect(() => {
 		if (canvasRef.current) {
-			const canvas = new fabric.StaticCanvas(canvasRef.current);
-			canvas.height = 300;
-			canvas.width = 800;
+			const canvas = new fabric.StaticCanvas(canvasRef.current, {
+				height: 300,
+				width: 800,
+			});
 
 			const checkpoint = new fabric.Rect({
 				left: 100,
@@ -147,12 +148,12 @@ const NoteCanvas: React.FC = () => {
 				display: "flex",
 				margin: "auto",
 				justifyContent: "center",
-				width: "100%",
+				width: 800,
 				height: 300,
 				backgroundColor: "#eee",
 			}}
 		>
-			<canvas ref={canvasRef} />
+			<canvas ref={canvasRef} height={300} width={800}/>
 		</Box>
 	);
 };
