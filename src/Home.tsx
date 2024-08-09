@@ -11,31 +11,51 @@ export const Home = () => {
 
 			<Container
 				sx={{
-					textAlign: "center",
 					backgroundColor: "gray",
 					color: "white",
-					height: "100vh",
+					display: "flex",
+					flexDirection: "column",
 				}}
 				maxWidth={false}
 				disableGutters
 			>
-				<Typography variant="h1" sx={{ fontSize: "5rem" }}>
-					<strong>Piano Hero</strong>
-				</Typography>
-				<Box
-					sx={{
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "center",
-						justifyContent: "center",
-					}}
-				>
-					<NoteProvider>
+				<NoteProvider>
+					<Box
+						sx={{
+							width: "100%",
+							textAlign: "center",
+							padding: "1rem",
+						}}
+					>
+						<Typography variant="h1" sx={{ fontSize: "5rem" }}>
+							<strong>Piano Hero</strong>
+						</Typography>
 						<Score />
-						<NoteCanvas />
-						<Piano />
-					</NoteProvider>
-				</Box>
+					</Box>
+
+					<Box
+						sx={{
+							display: "flex",
+							flexDirection: "column",
+							alignItems: "center",
+							justifyContent: "center",
+							flexGrow: 1,
+							padding: "2rem",
+						}}
+					>
+						<Box
+							sx={{
+								width: "800px",
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+							}}
+						>
+							<NoteCanvas />
+							<Piano />
+						</Box>
+					</Box>
+				</NoteProvider>
 			</Container>
 		</>
 	);
