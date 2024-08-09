@@ -1,75 +1,101 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 import { INotes } from "../../utils/interfaces";
 import { NoteType, notes } from "../../utils/constants";
 import { Box } from "@mui/material";
 import { useNoteContext } from "../../context/NotesContext";
-// import { useCanvasContext } from "../../context/CanvasContext";
+import { RectProps, TOptions } from "fabric";
 
 const scrollingNotes: INotes[] = [
-	// {
-	// 	...notes.G,
-	// 	displayAftertimeSeconds: 0,
-	// },
-	// {
-	// 	...notes.D,
-	// 	displayAftertimeSeconds: 1,
-	// },
 	{
-		...notes.S,
-		displayAftertimeSeconds: 3,
+		...notes.G,
+		displayAftertimeSeconds: 1,
 	},
 	{
 		...notes.F,
 		displayAftertimeSeconds: 3,
 	},
-	// {
-	// 	...notes.F,
-	// 	displayAftertimeSeconds: 5,
-	// },
-	// {
-	// 	...notes.T,
-	// 	displayAftertimeSeconds: 7,
-	// },
-	// {
-	// 	...notes.U,
-	// 	displayAftertimeSeconds: 8,
-	// },
+	{
+		...notes.S,
+		displayAftertimeSeconds: 3,
+	},
+	{
+		...notes.D,
+		displayAftertimeSeconds: 7,
+	},
+	{
+		...notes.G,
+		displayAftertimeSeconds: 7,
+	},
+	{
+		...notes.T,
+		displayAftertimeSeconds: 9,
+	},
+	{
+		...notes.U,
+		displayAftertimeSeconds: 11,
+	},
+	{
+		...notes.H,
+		displayAftertimeSeconds: 13,
+	},
+	{
+		...notes.J,
+		displayAftertimeSeconds: 15,
+	},
+	{
+		...notes.K,
+		displayAftertimeSeconds: 17,
+	},
 ];
 
 const NoteCanvas: React.FC = () => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const notesRef = useRef<fabric.Rect[]>([]);
 
-	const { addNote, removeNote, targetDivRef } = useNoteContext();
-	
+	const { addNote, removeNote } = useNoteContext();
+
 	useEffect(() => {
 		if (canvasRef.current) {
 			const canvas = new fabric.StaticCanvas(canvasRef.current);
-			canvas.height = 200;
+			canvas.height = 300;
 			canvas.width = 800;
 
 			const checkpoint = new fabric.Rect({
 				left: 100,
-				top: 190,
-				opacity: 0.5,
+				top: 300,
+				opacity: 1,
 				width: 800,
 				height: 50,
-				fill: "#eee",
+				fill: "#000",
 			});
 
 			canvas.add(checkpoint);
 
 			scrollingNotes.forEach((note) => {
-				const fabricNote = new fabric.Rect({
-					left: note.offset * 32 + 550,
+				const whiteNoteProps: TOptions<RectProps> = {
+					left: note.offset * 32 + 400,
 					top: 0,
-					fill: note.type === NoteType.black ? "black" : "white",
+					fill: "white",
 					width: 60,
 					height: 50,
 					strokeWidth: 1,
 					stroke: "black",
-				});
+					opacity: 0,
+				};
+
+				const blackNoteProps: TOptions<RectProps> = {
+					left: note.offset * 32 + 393,
+					top: 0,
+					fill: "black",
+					width: 40,
+					height: 50,
+					strokeWidth: 1,
+					stroke: "black",
+					opacity: 0,
+				};
+
+				const fabricNote = new fabric.Rect(note.type === NoteType.black ? blackNoteProps : whiteNoteProps);
 
 				fabricNote.on("moving", () => {
 					fabricNote.setCoords();
@@ -78,11 +104,14 @@ const NoteCanvas: React.FC = () => {
 
 				fabricNote.animate(
 					{
-						top: 200,
+						top: 310,
 					},
 					{
 						delay: note.displayAftertimeSeconds * 1000,
-						duration: 3000,
+						duration: 6000,
+						onStart: () => {
+							fabricNote.opacity = 1;
+						},
 						onChange: () => {
 							fabricNote.setCoords();
 							canvas.renderAll();
@@ -105,32 +134,8 @@ const NoteCanvas: React.FC = () => {
 				notesRef.current.push(fabricNote);
 			});
 
-			
-
-			const handleKeyDown = () => {
-				const isOverlapping = () => {
-					let isOverlapping = false;
-					notesRef.current.forEach((note) => {
-						if (checkpoint.isOverlapping(note)) {
-							isOverlapping = true;
-						}
-					});
-
-					return isOverlapping;
-				};
-
-				if (isOverlapping()) {
-					console.log("is overlapping");
-				} else {
-					console.log("is not overlapping");
-				}
-			};
-
-			addEventListener("keydown", handleKeyDown);
-
 			return () => {
 				canvas.dispose();
-				removeEventListener("keydown", handleKeyDown);
 			};
 		}
 	}, []);
@@ -143,8 +148,8 @@ const NoteCanvas: React.FC = () => {
 				margin: "auto",
 				justifyContent: "center",
 				width: "100%",
-				height: 200,
-				backgroundColor: "#eee"
+				height: 300,
+				backgroundColor: "#eee",
 			}}
 		>
 			<canvas ref={canvasRef} />
