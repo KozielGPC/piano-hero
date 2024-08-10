@@ -41,7 +41,6 @@ export const Home = () => {
 							flexGrow: 1,
 							minWidth: "800px",
 							minHeight: "500px",
-							// height: "95%",
 							backgroundColor: "white",
 							marginTop: "2rem",
 							marginBottom: "2rem",

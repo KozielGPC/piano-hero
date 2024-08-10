@@ -1,30 +1,36 @@
-# React + TypeScript + Vite
+# Piano Hero
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### About
+Piano Hero is a rhythm based game like the Guitar Hero, but for Piano. It is still under development, so may occur some bugs.
 
-Currently, two official plugins are available:
+### Play
+It's deployed on Vercel. You can play online clicking [here](https://kozi-piano-hero.vercel.app/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Expanding the ESLint configuration
+### Technologies
+For this application, I've used mainly React.Js, styled with Material UI, and [Fabric.Js](https://fabricjs.com/) for Canvas management, animation control and collision detection.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### Run Locally
 
-- Configure the top-level `parserOptions` property like this:
+```shell
+# Clone repo
+git clone https://github.com/KozielGPC/piano-hero.git
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+# Enter folder
+cd piano-hero
+
+# Install dependencies
+yarn install
+
+# Run
+yarn dev
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+### Current State and Next Steps
+- [x] Online Piano with keys and sounds
+- [x] Scrolling Notes 
+- [x] Score
+- [ ] Play/Restart Button
+- [ ] Generate Scrolling Notes automatically through MP3 files upload
+- [ ] Scoreboard for each song 
+- [ ] Online gameplay
