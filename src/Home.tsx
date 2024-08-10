@@ -1,8 +1,6 @@
 import { Box, Container, CssBaseline, Typography } from "@mui/material";
-import { Piano } from "./components/Piano";
 import { NoteProvider } from "./context/NotesContext";
-import { Score } from "./components/Score";
-import NoteCanvas from "./components/Fabric";
+import GameController from "./components/GameController";
 
 export const Home = () => {
 	return (
@@ -15,6 +13,7 @@ export const Home = () => {
 					color: "white",
 					display: "flex",
 					flexDirection: "column",
+					minHeight: "100vh",
 				}}
 				maxWidth={false}
 				disableGutters
@@ -25,35 +24,34 @@ export const Home = () => {
 							width: "100%",
 							textAlign: "center",
 							padding: "1rem",
+							backgroundColor: "black",
+							height: "5%",
 						}}
 					>
-						<Typography variant="h1" sx={{ fontSize: "5rem" }}>
+						<Typography variant="h1" sx={{ fontSize: "3rem" }}>
 							<strong>Piano Hero</strong>
 						</Typography>
-						<Score />
 					</Box>
 
 					<Box
 						sx={{
 							display: "flex",
 							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
+							margin: "auto",
 							flexGrow: 1,
-							padding: "2rem",
+							minWidth: "800px",
+							minHeight: "500px",
+							// height: "95%",
+							backgroundColor: "white",
+							marginTop: "2rem",
+							marginBottom: "2rem",
+							borderRadius: "10px",
+							justifyContent: "center",
+							alignItems: "center",
+							border: "2px solid black",
 						}}
 					>
-						<Box
-							sx={{
-								width: "800px",
-								display: "flex",
-								flexDirection: "column",
-								alignItems: "center",
-							}}
-						>
-							<NoteCanvas />
-							<Piano />
-						</Box>
+						<GameController />
 					</Box>
 				</NoteProvider>
 			</Container>

@@ -15,38 +15,38 @@ const scrollingNotes: INotes[] = [
 		...notes.F,
 		displayAftertimeSeconds: 3,
 	},
-	{
-		...notes.S,
-		displayAftertimeSeconds: 3,
-	},
-	{
-		...notes.D,
-		displayAftertimeSeconds: 7,
-	},
-	{
-		...notes.G,
-		displayAftertimeSeconds: 7,
-	},
-	{
-		...notes.T,
-		displayAftertimeSeconds: 9,
-	},
-	{
-		...notes.U,
-		displayAftertimeSeconds: 11,
-	},
-	{
-		...notes.H,
-		displayAftertimeSeconds: 13,
-	},
-	{
-		...notes.J,
-		displayAftertimeSeconds: 15,
-	},
-	{
-		...notes.K,
-		displayAftertimeSeconds: 17,
-	},
+	// {
+	// 	...notes.S,
+	// 	displayAftertimeSeconds: 3,
+	// },
+	// {
+	// 	...notes.D,
+	// 	displayAftertimeSeconds: 7,
+	// },
+	// {
+	// 	...notes.G,
+	// 	displayAftertimeSeconds: 7,
+	// },
+	// {
+	// 	...notes.T,
+	// 	displayAftertimeSeconds: 9,
+	// },
+	// {
+	// 	...notes.U,
+	// 	displayAftertimeSeconds: 11,
+	// },
+	// {
+	// 	...notes.H,
+	// 	displayAftertimeSeconds: 13,
+	// },
+	// {
+	// 	...notes.J,
+	// 	displayAftertimeSeconds: 15,
+	// },
+	// {
+	// 	...notes.K,
+	// 	displayAftertimeSeconds: 17,
+	// },
 ];
 
 const NoteCanvas: React.FC = () => {
@@ -153,7 +153,7 @@ const NoteCanvas: React.FC = () => {
 				backgroundColor: "#eee",
 			}}
 		>
-			<canvas ref={canvasRef} height={300} width={800}/>
+			<canvas ref={canvasRef} height={300} width={800} />
 		</Box>
 	);
 };
