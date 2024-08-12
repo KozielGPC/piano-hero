@@ -1,53 +1,96 @@
 import React, { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 import { INotes } from "../../utils/interfaces";
-import { NoteType, notes } from "../../utils/constants";
+import { NoteType, notes, scrollingNotes} from "../../utils/constants";
 import { Box } from "@mui/material";
 import { useNoteContext } from "../../context/NotesContext";
 import { RectProps, TOptions } from "fabric";
 
-const scrollingNotes: INotes[] = [
-	{
-		...notes.G,
-		displayAftertimeSeconds: 1,
-	},
-	{
-		...notes.F,
-		displayAftertimeSeconds: 3,
-	},
-	{
-		...notes.S,
-		displayAftertimeSeconds: 3,
-	},
-	{
-		...notes.D,
-		displayAftertimeSeconds: 7,
-	},
-	{
-		...notes.G,
-		displayAftertimeSeconds: 7,
-	},
-	{
-		...notes.T,
-		displayAftertimeSeconds: 9,
-	},
-	{
-		...notes.U,
-		displayAftertimeSeconds: 11,
-	},
-	{
-		...notes.H,
-		displayAftertimeSeconds: 13,
-	},
-	{
-		...notes.J,
-		displayAftertimeSeconds: 15,
-	},
-	{
-		...notes.K,
-		displayAftertimeSeconds: 17,
-	},
-];
+// const scrollingNotes: INotes[] = [
+// 	{
+// 		...notes.G,
+// 		displayAftertimeSeconds: 1,
+// 	},
+// 	{
+// 		...notes.F,
+// 		displayAftertimeSeconds: 3,
+// 	},
+// 	{
+// 		...notes.S,
+// 		displayAftertimeSeconds: 3,
+// 	},
+// 	{
+// 		...notes.D,
+// 		displayAftertimeSeconds: 7,
+// 	},
+// 	{
+// 		...notes.G,
+// 		displayAftertimeSeconds: 7,
+// 	},
+// 	{
+// 		...notes.T,
+// 		displayAftertimeSeconds: 9,
+// 	},
+// 	{
+// 		...notes.U,
+// 		displayAftertimeSeconds: 11,
+// 	},
+// 	{
+// 		...notes.H,
+// 		displayAftertimeSeconds: 13,
+// 	},
+// 	{
+// 		...notes.J,
+// 		displayAftertimeSeconds: 15,
+// 	},
+// 	{
+// 		...notes.K,
+// 		displayAftertimeSeconds: 17,
+// 	},
+// ];
+
+// const scrollingNotes: INotes[] = [
+// 	{
+// 		...notes.S,
+// 		displayAftertimeSeconds: 1,
+// 	},
+// 	{
+// 		...notes.J,
+// 		displayAftertimeSeconds: 1,
+// 	},
+// 	{
+// 		...notes.J,
+// 		displayAftertimeSeconds: 1,
+// 	},
+// 	{
+// 		...notes.F,
+// 		displayAftertimeSeconds: 4,
+// 	},
+// 	{
+// 		...notes.H,
+// 		displayAftertimeSeconds: 4,
+// 	},
+// 	// {
+// 	// 	...notes.T,
+// 	// 	displayAftertimeSeconds: 9,
+// 	// },
+// 	// {
+// 	// 	...notes.U,
+// 	// 	displayAftertimeSeconds: 11,
+// 	// },
+// 	// {
+// 	// 	...notes.H,
+// 	// 	displayAftertimeSeconds: 13,
+// 	// },
+// 	// {
+// 	// 	...notes.J,
+// 	// 	displayAftertimeSeconds: 15,
+// 	// },
+// 	// {
+// 	// 	...notes.K,
+// 	// 	displayAftertimeSeconds: 17,
+// 	// },
+// ];
 
 const NoteCanvas: React.FC = () => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
