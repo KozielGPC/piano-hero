@@ -4,61 +4,114 @@ export enum NoteType {
 }
 
 export const notes = {
-	E: {
+	Qb: {
 		offset: -5.5,
-		note: "e",
+		note: "2",
+		type: NoteType.black,
+		fileName: "Db3.mp3",
+	},
+	Q: { offset: -7, note: "q", type: NoteType.white, fileName: "C3.mp3" },
+	Wb: {
+		offset: -3.5,
+		note: "3",
+		type: NoteType.black,
+		fileName: "Eb3.mp3",
+	},
+	W: { offset: -5, note: "w", type: NoteType.white, fileName: "D3.mp3" },
+	E: { offset: -3, note: "e", type: NoteType.white, fileName: "E3.mp3" },
+	Rb: {
+		offset: 0.5,
+		note: "4",
+		type: NoteType.black,
+		fileName: "Gb3.mp3",
+	},
+	R: { offset: -1, note: "r", type: NoteType.white, fileName: "F3.mp3" },
+	Tb: {
+		offset: 2.5,
+		note: "5",
+		type: NoteType.black,
+		fileName: "Ab3.mp3",
+	},
+	T: { offset: 1, note: "t", type: NoteType.white, fileName: "G3.mp3" },
+	Ub: {
+		offset: 4.5,
+		note: "6",
+		type: NoteType.black,
+		fileName: "Bb3.mp3",
+	},
+	Y: { offset: 3, note: "y", type: NoteType.white, fileName: "A3.mp3" },
+	U: { offset: 5, note: "u", type: NoteType.white, fileName: "B3.mp3" },
+
+
+
+	S: {
+		offset: -5.5,
+		note: "s",
 		type: NoteType.black,
 		fileName: "Db4.mp3",
 	},
-	S: { offset: -7, note: "s", type: NoteType.white, fileName: "C4.mp3" },
-	R: {
+	Z: { offset: -7, note: "z", type: NoteType.white, fileName: "C4.mp3" },
+	D: {
 		offset: -3.5,
-		note: "r",
+		note: "d",
 		type: NoteType.black,
 		fileName: "Eb4.mp3",
 	},
-	D: { offset: -5, note: "d", type: NoteType.white, fileName: "D4.mp3" },
-	F: { offset: -3, note: "f", type: NoteType.white, fileName: "E4.mp3" },
-	Y: {
+	X: { offset: -5, note: "x", type: NoteType.white, fileName: "D4.mp3" },
+	C: { offset: -3, note: "c", type: NoteType.white, fileName: "E4.mp3" },
+	G: {
 		offset: 0.5,
-		note: "y",
+		note: "g",
 		type: NoteType.black,
 		fileName: "Gb4.mp3",
 	},
-	G: { offset: -1, note: "g", type: NoteType.white, fileName: "F4.mp3" },
-	U: {
+	V: { offset: -1, note: "v", type: NoteType.white, fileName: "F4.mp3" },
+	H: {
 		offset: 2.5,
-		note: "u",
+		note: "h",
 		type: NoteType.black,
 		fileName: "Ab4.mp3",
 	},
-	H: { offset: 1, note: "h", type: NoteType.white, fileName: "G4.mp3" },
-	I: {
+	B: { offset: 1, note: "b", type: NoteType.white, fileName: "G4.mp3" },
+	J: {
 		offset: 4.5,
-		note: "i",
+		note: "j",
 		type: NoteType.black,
 		fileName: "Bb4.mp3",
 	},
-	J: { offset: 3, note: "j", type: NoteType.white, fileName: "A4.mp3" },
-	K: { offset: 5, note: "k", type: NoteType.white, fileName: "B4.mp3" },
+	N: { offset: 3, note: "n", type: NoteType.white, fileName: "A4.mp3" },
+	M: { offset: 5, note: "m", type: NoteType.white, fileName: "B4.mp3" },
 };
 
 export const keys = Object.values(notes);
 
 const noteMapping = {
-	60: notes.S, // C4
-	61: notes.E, // C#4
-	62: notes.D, // D4
-	63: notes.R, // D#4
-	64: notes.F, // E4
-	65: notes.G, // F4
-	66: notes.Y, // F#4
-	67: notes.H, // G4
-	68: notes.U, // G#4
-	69: notes.J, // A4
-	70: notes.I, // A#4
-	71: notes.K, // B4
+	48: notes.Q,   // C3
+	49: notes.Qb,  // C#3
+	50: notes.W,   // D3
+	51: notes.Wb,  // D#3
+	52: notes.E,   // E3
+	53: notes.R,   // F3
+	54: notes.Rb,  // F#3
+	55: notes.T,   // G3
+	56: notes.Tb,  // G#3
+	57: notes.Y,   // A3
+	58: notes.Ub,  // A#3
+	59: notes.U,   // B3
+	60: notes.Z,   // C4
+	61: notes.S,   // C#4
+	62: notes.X,   // D4
+	63: notes.D,   // D#4
+	64: notes.C,   // E4
+	65: notes.V,   // F4
+	66: notes.G,   // F#4
+	67: notes.B,   // G4
+	68: notes.H,   // G#4
+	69: notes.N,   // A4
+	70: notes.J,   // A#4
+	71: notes.M,   // B4
 };
+
 
 export function generateScrollingNotes(json: any) {
 	const scrollingNotes: any = [];
