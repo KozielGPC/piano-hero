@@ -6,10 +6,17 @@ Piano Hero is a rhythm based game like the Guitar Hero, but for Piano. It is sti
 ### Play
 It's deployed on Vercel. You can play online clicking [here](https://kozi-piano-hero.vercel.app/)
 
-### Screenshots
-![image](https://github.com/user-attachments/assets/619ecb8d-a8e9-42d2-8635-752141cca780)
 
-![image](https://github.com/user-attachments/assets/eb8e0beb-e5c7-470e-a967-e93a45c3e709)
+### Available Songs
+- Interestellar Main Theme - Hans Zimmer (simplified)
+
+### Screenshots
+
+![image](https://github.com/user-attachments/assets/77b26e6a-8e7b-44af-8407-e8c0767e01c3)
+
+
+![image](https://github.com/user-attachments/assets/7ab61bb2-9dc6-4e21-b1cb-b250a75f7bd2)
+
 
 
 ### Technologies
