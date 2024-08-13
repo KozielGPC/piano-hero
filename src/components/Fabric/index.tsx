@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 // import { INotes } from "../../utils/interfaces";
-import { NoteType, scrollingNotes } from "../../utils/constants";
+import { NoteType } from "../../utils/constants";
 import { Box } from "@mui/material";
 import { useNoteContext } from "../../context/NotesContext";
 import { RectProps, TOptions } from "fabric";
+import { scrollingNotes } from "../../songs/interestellar";
 
 // const scrollingNotes: INotes[] = [
 // 	{
