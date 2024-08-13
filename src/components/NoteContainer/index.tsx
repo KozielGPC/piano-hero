@@ -16,14 +16,14 @@ const scrollingNotes: INotes[] = [
 		...notes.S,
 		displayAftertimeSeconds: 3,
 	},
-	{
-		...notes.F,
-		displayAftertimeSeconds: 3,
-	},
-	{
-		...notes.F,
-		displayAftertimeSeconds: 5,
-	},
+	// {
+	// 	...notes.F,
+	// 	displayAftertimeSeconds: 3,
+	// },
+	// {
+	// 	...notes.F,
+	// 	displayAftertimeSeconds: 5,
+	// },
 	{
 		...notes.T,
 		displayAftertimeSeconds: 7,
