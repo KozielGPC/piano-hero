@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import * as fabric from "fabric";
-import { INotes } from "../../utils/interfaces";
-import { NoteType, notes, scrollingNotes} from "../../utils/constants";
+// import { INotes } from "../../utils/interfaces";
+import { NoteType, scrollingNotes } from "../../utils/constants";
 import { Box } from "@mui/material";
 import { useNoteContext } from "../../context/NotesContext";
 import { RectProps, TOptions } from "fabric";
@@ -51,25 +51,25 @@ import { RectProps, TOptions } from "fabric";
 
 // const scrollingNotes: INotes[] = [
 // 	{
-// 		...notes.S,
-// 		displayAftertimeSeconds: 1,
+// 		...notes.M,
+// 		displayAftertimeSeconds: 0,
 // 	},
-// 	{
-// 		...notes.J,
-// 		displayAftertimeSeconds: 1,
-// 	},
-// 	{
-// 		...notes.J,
-// 		displayAftertimeSeconds: 1,
-// 	},
-// 	{
-// 		...notes.F,
-// 		displayAftertimeSeconds: 4,
-// 	},
-// 	{
-// 		...notes.H,
-// 		displayAftertimeSeconds: 4,
-// 	},
+// 	// {
+// 	// 	...notes.J,
+// 	// 	displayAftertimeSeconds: 1,
+// 	// },
+// 	// {
+// 	// 	...notes.J,
+// 	// 	displayAftertimeSeconds: 1,
+// 	// },
+// 	// {
+// 	// 	...notes.F,
+// 	// 	displayAftertimeSeconds: 4,
+// 	// },
+// 	// {
+// 	// 	...notes.H,
+// 	// 	displayAftertimeSeconds: 4,
+// 	// },
 // 	// {
 // 	// 	...notes.T,
 // 	// 	displayAftertimeSeconds: 9,
@@ -102,14 +102,14 @@ const NoteCanvas: React.FC = () => {
 		if (canvasRef.current) {
 			const canvas = new fabric.StaticCanvas(canvasRef.current, {
 				height: 300,
-				width: 800,
+				width: 900,
 			});
 
 			const checkpoint = new fabric.Rect({
 				left: 100,
 				top: 300,
 				opacity: 1,
-				width: 800,
+				width: 900,
 				height: 50,
 				fill: "#000",
 			});
@@ -191,12 +191,12 @@ const NoteCanvas: React.FC = () => {
 				display: "flex",
 				margin: "auto",
 				justifyContent: "center",
-				width: 800,
+				width: 900,
 				height: 300,
 				backgroundColor: "#eee",
 			}}
 		>
-			<canvas ref={canvasRef} height={300} width={800} />
+			<canvas ref={canvasRef} height={300} width={900} />
 		</Box>
 	);
 };

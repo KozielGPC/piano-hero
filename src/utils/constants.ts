@@ -1,3 +1,5 @@
+import { IMidiData, INotes } from "./interfaces";
+
 export enum NoteType {
 	white = "white",
 	black = "black",
@@ -5,82 +7,82 @@ export enum NoteType {
 
 export const notes = {
 	Qb: {
-		offset: -5.5,
+		offset: -11,
 		note: "2",
 		type: NoteType.black,
 		fileName: "Db3.mp3",
 	},
-	Q: { offset: -7, note: "q", type: NoteType.white, fileName: "C3.mp3" },
+	Q: { offset: -12.5, note: "q", type: NoteType.white, fileName: "C3.mp3" },
 	Wb: {
-		offset: -3.5,
+		offset: -9,
 		note: "3",
 		type: NoteType.black,
 		fileName: "Eb3.mp3",
 	},
-	W: { offset: -5, note: "w", type: NoteType.white, fileName: "D3.mp3" },
-	E: { offset: -3, note: "e", type: NoteType.white, fileName: "E3.mp3" },
+	W: { offset: -10.5, note: "w", type: NoteType.white, fileName: "D3.mp3" },
+	E: { offset: -8.5, note: "e", type: NoteType.white, fileName: "E3.mp3" },
 	Rb: {
-		offset: 0.5,
+		offset: -5,
 		note: "4",
 		type: NoteType.black,
 		fileName: "Gb3.mp3",
 	},
-	R: { offset: -1, note: "r", type: NoteType.white, fileName: "F3.mp3" },
+	R: { offset: -6.5, note: "r", type: NoteType.white, fileName: "F3.mp3" },
 	Tb: {
-		offset: 2.5,
+		offset: -3,
 		note: "5",
 		type: NoteType.black,
 		fileName: "Ab3.mp3",
 	},
-	T: { offset: 1, note: "t", type: NoteType.white, fileName: "G3.mp3" },
+	T: { offset: -4.5, note: "t", type: NoteType.white, fileName: "G3.mp3" },
 	Ub: {
-		offset: 4.5,
+		offset: -1,
 		note: "6",
 		type: NoteType.black,
 		fileName: "Bb3.mp3",
 	},
-	Y: { offset: 3, note: "y", type: NoteType.white, fileName: "A3.mp3" },
-	U: { offset: 5, note: "u", type: NoteType.white, fileName: "B3.mp3" },
+	Y: { offset: -2.5, note: "y", type: NoteType.white, fileName: "A3.mp3" },
+	U: { offset: -0.5, note: "u", type: NoteType.white, fileName: "B3.mp3" },
 
 
 
 	S: {
-		offset: -5.5,
+		offset: 3,
 		note: "s",
 		type: NoteType.black,
 		fileName: "Db4.mp3",
 	},
-	Z: { offset: -7, note: "z", type: NoteType.white, fileName: "C4.mp3" },
+	Z: { offset: 1.5, note: "z", type: NoteType.white, fileName: "C4.mp3" },
 	D: {
-		offset: -3.5,
+		offset: 5,
 		note: "d",
 		type: NoteType.black,
 		fileName: "Eb4.mp3",
 	},
-	X: { offset: -5, note: "x", type: NoteType.white, fileName: "D4.mp3" },
-	C: { offset: -3, note: "c", type: NoteType.white, fileName: "E4.mp3" },
+	X: { offset: 3.5, note: "x", type: NoteType.white, fileName: "D4.mp3" },
+	C: { offset: 5.5, note: "c", type: NoteType.white, fileName: "E4.mp3" },
 	G: {
-		offset: 0.5,
+		offset: 9,
 		note: "g",
 		type: NoteType.black,
 		fileName: "Gb4.mp3",
 	},
-	V: { offset: -1, note: "v", type: NoteType.white, fileName: "F4.mp3" },
+	V: { offset: 7.5, note: "v", type: NoteType.white, fileName: "F4.mp3" },
 	H: {
-		offset: 2.5,
+		offset: 11,
 		note: "h",
 		type: NoteType.black,
 		fileName: "Ab4.mp3",
 	},
-	B: { offset: 1, note: "b", type: NoteType.white, fileName: "G4.mp3" },
+	B: { offset: 9.5, note: "b", type: NoteType.white, fileName: "G4.mp3" },
 	J: {
-		offset: 4.5,
+		offset: 13,
 		note: "j",
 		type: NoteType.black,
 		fileName: "Bb4.mp3",
 	},
-	N: { offset: 3, note: "n", type: NoteType.white, fileName: "A4.mp3" },
-	M: { offset: 5, note: "m", type: NoteType.white, fileName: "B4.mp3" },
+	N: { offset: 11.5, note: "n", type: NoteType.white, fileName: "A4.mp3" },
+	M: { offset: 13.5, note: "m", type: NoteType.white, fileName: "B4.mp3" },
 };
 
 export const keys = Object.values(notes);
@@ -113,13 +115,14 @@ const noteMapping = {
 };
 
 
-export function generateScrollingNotes(json: any) {
-	const scrollingNotes: any = [];
+export function generateScrollingNotes(json: IMidiData) {
+	const scrollingNotes: INotes[] = [];
 	const { tracks } = json;
 	let currentTime = 0;
 
 	tracks.forEach((track) => {
 		track.notes.forEach((note) => {
+			// @ts-expect-error TODO
 			const mappedNote = noteMapping[note.midi];
 			if (mappedNote) {
 				const displayAftertimeSeconds = note.duration + currentTime;
@@ -136,7 +139,7 @@ export function generateScrollingNotes(json: any) {
 	return scrollingNotes;
 }
 
-export const musicJson = {
+export const musicJson: IMidiData = {
 	header: {
 		keySignatures: [],
 		meta: [],
