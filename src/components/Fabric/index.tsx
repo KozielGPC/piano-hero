@@ -5,7 +5,7 @@ import { NoteType } from "../../utils/constants";
 import { Box } from "@mui/material";
 import { useNoteContext } from "../../context/NotesContext";
 import { RectProps, TOptions } from "fabric";
-import { scrollingNotes } from "../../songs/interestellar";
+import { scrollingNotesTesteInterestellar } from "../../songs/interestellar";
 
 // const scrollingNotes: INotes[] = [
 // 	{
@@ -117,7 +117,7 @@ const NoteCanvas: React.FC = () => {
 
 			canvas.add(checkpoint);
 
-			scrollingNotes.forEach((note) => {
+			scrollingNotesTesteInterestellar.forEach((note) => {
 				const whiteNoteProps: TOptions<RectProps> = {
 					left: note.offset * 32 + 400,
 					top: 0,
