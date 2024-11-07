@@ -1,228 +1,198 @@
-import librosa
-import numpy as np
+"""
+Guitar Hero and Clone Hero Note Chart Format Parser
+This demonstrates the common approaches used by GH-like games for note sequences
+"""
+
 import json
-from pydub import AudioSegment
+import mido
+from typing import List, Dict, Union
+import re
+from dataclasses import dataclass
+from enum import Enum
 
-note_mapping = {
-    48: "Q",   # C3
-    49: "Qb",  # C#3
-    50: "W",   # D3
-    51: "Wb",  # D#3
-    52: "E",   # E3
-    53: "R",   # F3
-    54: "Rb",  # F#3
-    55: "T",   # G3
-    56: "Tb",  # G#3
-    57: "Y",   # A3
-    58: "Ub",  # A#3
-    59: "U",   # B3
-    60: "Z",   # C4
-    61: "S",   # C#4
-    62: "X",   # D4
-    63: "D",   # D#4
-    64: "C",   # E4
-    65: "V",   # F4
-    66: "G",   # F#4
-    67: "B",   # G4
-    68: "H",   # G#4
-    69: "N",   # A4
-    70: "J",   # A#4
-    71: "M",   # B4
-}
+# Common section types in .chart files
+class ChartSection(Enum):
+    SONG = "Song"
+    SYNC_TRACK = "SyncTrack"
+    EVENTS = "Events"
+    EXPERT = "ExpertSingle"
+    HARD = "HardSingle"
+    MEDIUM = "MediumSingle"
+    EASY = "EasySingle"
 
-notes = {
-    "Qb": {
-        "offset": -11,
-        "note": "2",
-        "type": "black",
-        "fileName": "Db4.mp3"
-    },
-    "Q": {
-        "offset": -12.5,
-        "note": "q",
-        "type": "white",
-        "fileName": "C4.mp3"
-    },
-    "Wb": {
-        "offset": -9,
-        "note": "3",
-        "type": "black",
-        "fileName": "Eb4.mp3"
-    },
-    "W": {
-        "offset": -10.5,
-        "note": "w",
-        "type": "white",
-        "fileName": "D4.mp3"
-    },
-    "E": {
-        "offset": -8.5,
-        "note": "e",
-        "type": "white",
-        "fileName": "E4.mp3"
-    },
-    "Rb": {
-        "offset": -5,
-        "note": "4",
-        "type": "black",
-        "fileName": "Gb4.mp3"
-    },
-    "R": {
-        "offset": -6.5,
-        "note": "r",
-        "type": "white",
-        "fileName": "F4.mp3"
-    },
-    "Tb": {
-        "offset": -3,
-        "note": "5",
-        "type": "black",
-        "fileName": "Ab4.mp3"
-    },
-    "T": {
-        "offset": -4.5,
-        "note": "t",
-        "type": "white",
-        "fileName": "G4.mp3"
-    },
-    "Ub": {
-        "offset": -1,
-        "note": "6",
-        "type": "black",
-        "fileName": "Bb4.mp3"
-    },
-    "Y": {
-        "offset": -2.5,
-        "note": "y",
-        "type": "white",
-        "fileName": "A4.mp3"
-    },
-    "U": {
-        "offset": -0.5,
-        "note": "u",
-        "type": "white",
-        "fileName": "B4.mp3"
-    },
-    "S": {
-        "offset": 3,
-        "note": "s",
-        "type": "black",
-        "fileName": "Db5.mp3"
-    },
-    "Z": {
-        "offset": 1.5,
-        "note": "z",
-        "type": "white",
-        "fileName": "C5.mp3"
-    },
-    "D": {
-        "offset": 5,
-        "note": "d",
-        "type": "black",
-        "fileName": "Eb5.mp3"
-    },
-    "X": {
-        "offset": 3.5,
-        "note": "x",
-        "type": "white",
-        "fileName": "D5.mp3"
-    },
-    "C": {
-        "offset": 5.5,
-        "note": "c",
-        "type": "white",
-        "fileName": "E5.mp3"
-    },
-    "G": {
-        "offset": 9,
-        "note": "g",
-        "type": "black",
-        "fileName": "Gb5.mp3"
-    },
-    "V": {
-        "offset": 7.5,
-        "note": "v",
-        "type": "white",
-        "fileName": "F5.mp3"
-    },
-    "H": {
-        "offset": 11,
-        "note": "h",
-        "type": "black",
-        "fileName": "Ab5.mp3"
-    },
-    "B": {
-        "offset": 9.5,
-        "note": "b",
-        "type": "white",
-        "fileName": "G5.mp3"
-    },
-    "J": {
-        "offset": 13,
-        "note": "j",
-        "type": "black",
-        "fileName": "Bb5.mp3"
-    },
-    "N": {
-        "offset": 11.5,
-        "note": "n",
-        "type": "white",
-        "fileName": "A5.mp3"
-    },
-    "M": {
-        "offset": 13.5,
-        "note": "m",
-        "type": "white",
-        "fileName": "B5.mp3"
-    }
-}
+@dataclass
+class ChartNote:
+    time: int        # Timestamp in milliseconds
+    note: int        # Note number (0-4 for guitar)
+    duration: int    # Duration in milliseconds
+    
+@dataclass
+class ChartEvent:
+    time: int
+    event_type: str
+    value: Union[str, int, float]
 
-
-def convert_mp3_to_wav(mp3_file):
-    audio = AudioSegment.from_mp3(mp3_file)
-    wav_file = mp3_file.replace(".mp3", ".wav")
-    audio.export(wav_file, format="wav")
-    return wav_file
-
-def analyze_audio(file_path):
-    wav_file = convert_mp3_to_wav(file_path)
-
-    # Load audio and extract features
-    y, sr = librosa.load(wav_file)
-    chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
-    onsets = librosa.onset.onset_detect(y=y, sr=sr, units='time')
-
-    notes_sequence = []
-    for onset in onsets:
-        # Convert onset time to the corresponding chroma frame index
-        time_index = librosa.time_to_frames(onset, sr=sr, hop_length=512)
+class ChartParser:
+    """
+    Parser for .chart files (used by Clone Hero and later Guitar Hero games)
+    """
+    def __init__(self):
+        self.resolution = 192  # Default resolution (ticks per quarter note)
+        self.bpm = 120.0      # Default BPM
         
-        if time_index < chroma.shape[1]:  # Ensure the index is within bounds
-            max_note_idx = np.argmax(chroma[:, time_index])
-            midi_note = max_note_idx + 48  # Adjust base MIDI note as per your range
+    def parse_chart_file(self, filepath: str) -> Dict:
+        """Parse a .chart file and extract note data"""
+        sections = {}
+        current_section = None
+        
+        with open(filepath, 'r') as f:
+            for line in f:
+                line = line.strip()
+                
+                # Section header
+                if line.startswith('['):
+                    current_section = line[1:-1]
+                    sections[current_section] = []
+                    continue
+                
+                # Section data
+                if current_section and '=' in line:
+                    key, value = line.split('=', 1)
+                    sections[current_section].append((key.strip(), value.strip()))
+        
+        return self._process_sections(sections)
+    
+    def _process_sections(self, sections: Dict) -> Dict:
+        """Process parsed sections into structured data"""
+        result = {
+            'metadata': {},
+            'notes': [],
+            'sync': [],
+            'events': []
+        }
+        
+        # Process song metadata
+        if 'Song' in sections:
+            for key, value in sections['Song']:
+                result['metadata'][key] = value
+        
+        # Process note tracks (focusing on Expert difficulty as example)
+        if 'ExpertSingle' in sections:
+            for time, event in sections['ExpertSingle']:
+                note_data = self._parse_note_event(time, event)
+                if note_data:
+                    result['notes'].append(note_data)
+        
+        return result
+    
+    def _parse_note_event(self, time: str, event: str) -> ChartNote:
+        """Parse a note event line from the chart file"""
+        # Example format: N 4 192 (note 4 at tick 192)
+        match = re.match(r'N (\d+) (\d+)', event)
+        if match:
+            note, duration = map(int, match.groups())
+            return ChartNote(
+                time=int(time),
+                note=note,
+                duration=duration
+            )
+        return None
+
+class MidiChartConverter:
+    """
+    Converter for MIDI files to Guitar Hero compatible note charts
+    This is similar to how Guitar Flash handles MIDI conversion
+    """
+    def __init__(self):
+        self.ticks_per_beat = 480  # Standard MIDI resolution
+        
+    def convert_midi_to_chart(self, midi_file: str) -> List[ChartNote]:
+        """Convert MIDI file to Guitar Hero style note chart"""
+        midi = mido.MidiFile(midi_file)
+        notes = []
+        current_time = 0
+        
+        # Track active notes and their start times
+        active_notes = {}
+        
+        for msg in midi.tracks[0]:  # Usually melody track
+            current_time += msg.time
             
-            if midi_note in note_mapping:
-                note_name = note_mapping[midi_note]
-                
-                # Assume a predefined `notes` dictionary exists with details for each note
-                note_data = notes[note_name]
-                
-                note_info = {
-                    "note": note_data['note'],
-                    "offset": note_data['offset'],
-                    "type": note_data['type'],
-                    "note_name": note_name,
-                    "displayAftertimeSeconds": onset
-                }
-                notes_sequence.append(note_info)
+            if msg.type == 'note_on' and msg.velocity > 0:
+                # Note start
+                active_notes[msg.note] = current_time
+            
+            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+                # Note end
+                if msg.note in active_notes:
+                    start_time = active_notes[msg.note]
+                    duration = current_time - start_time
+                    
+                    # Convert MIDI note to guitar fret (simplified mapping)
+                    fret = self._midi_note_to_fret(msg.note)
+                    
+                    if fret is not None:
+                        notes.append(ChartNote(
+                            time=int(start_time),
+                            note=fret,
+                            duration=int(duration)
+                        ))
+                    
+                    del active_notes[msg.note]
+        
+        return notes
+    
+    def _midi_note_to_fret(self, midi_note: int) -> int:
+        """
+        Convert MIDI note to guitar fret number
+        This is a simplified example - actual games use more complex mapping
+        """
+        # Map MIDI notes to 5 frets (0-4)
+        note_range = range(60, 65)  # C4 to E4
+        if midi_note in note_range:
+            return midi_note - 60
+        return None
 
-    # Save the notes sequence as JSON
-    with open("notes_sequence.json", "w") as file:
-        json.dump(notes_sequence, file, indent=2)
+def convert_to_piano_hero_format(chart_notes: List[ChartNote]) -> List[Dict]:
+    """
+    Convert Guitar Hero style notes to Piano Hero format
+    """
+    piano_notes = []
+    
+    # Note mapping for Piano Hero (simplified)
+    NOTE_MAPPING = {
+        0: {"note": "q", "offset": -12.5, "type": "white"},  # C
+        1: {"note": "w", "offset": -10.5, "type": "white"},  # D
+        2: {"note": "e", "offset": -8.5, "type": "white"},   # E
+        3: {"note": "r", "offset": -6.5, "type": "white"},   # F
+        4: {"note": "t", "offset": -4.5, "type": "white"},   # G
+    }
+    
+    for note in chart_notes:
+        if note.note in NOTE_MAPPING:
+            note_data = NOTE_MAPPING[note.note].copy()
+            note_data["displayAftertimeSeconds"] = note.time / 1000.0  # Convert to seconds
+            piano_notes.append(note_data)
+    
+    return piano_notes
 
-    return notes_sequence
+def main():
+    # Example usage
+    chart_parser = ChartParser()
+    midi_converter = MidiChartConverter()
+    
+    # # Example 1: Parse .chart file
+    # chart_data = chart_parser.parse_chart_file("example.chart")
+    
+    # Example 2: Convert MIDI to chart
+    chart_notes = midi_converter.convert_midi_to_chart("media/interestellar.mid")
+    
+    # Convert to Piano Hero format
+    piano_notes = convert_to_piano_hero_format(chart_notes)
+    
+    # Save to JSON
+    with open("notes.json", "w") as f:
+        json.dump(piano_notes, f, indent=2)
 
-# Example Usage
-file_path = "media/interestellar.mp3"
-notes_sequence = analyze_audio(file_path)
-print("Notes sequence generated!!!")
+if __name__ == "__main__":
+    main()
