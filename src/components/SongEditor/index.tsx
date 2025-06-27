@@ -380,15 +380,28 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
       return;
     }
 
+    // Convert EditorNote format to export format
+    // Each EditorNote can have multiple keys, so we need to create separate notes for each key
+    const exportNotes: INotes[] = [];
+    
+    songData.notes.forEach(editorNote => {
+      editorNote.keys.forEach(key => {
+        const noteData = notes[key as keyof typeof notes];
+        if (noteData) {
+          exportNotes.push({
+            note: key,
+            offset: noteData.offset,
+            type: noteData.type,
+            displayAftertimeSeconds: editorNote.time
+          });
+        }
+      });
+    });
+
     const exportData = {
       name: songData.name,
       artist: songData.artist,
-      notes: songData.notes.map(note => ({
-        note: note.note,
-        offset: note.offset,
-        type: note.type,
-        displayAftertimeSeconds: note.time
-      }))
+      notes: exportNotes
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -417,12 +430,22 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
     }
 
     // Convert EditorNote format to INotes format
-    const gameNotes: INotes[] = songData.notes.map(note => ({
-      note: note.note,
-      offset: note.offset,
-      type: note.type,
-      displayAftertimeSeconds: note.time
-    }));
+    // Each EditorNote can have multiple keys, so we need to create separate notes for each key
+    const gameNotes: INotes[] = [];
+    
+    songData.notes.forEach(editorNote => {
+      editorNote.keys.forEach(key => {
+        const noteData = notes[key as keyof typeof notes];
+        if (noteData) {
+          gameNotes.push({
+            note: key,
+            offset: noteData.offset,
+            type: noteData.type,
+            displayAftertimeSeconds: editorNote.time
+          });
+        }
+      });
+    });
 
     onPlaySong(gameNotes);
   };
