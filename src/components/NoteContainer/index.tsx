@@ -1,40 +1,33 @@
 import { Box } from "@mui/material";
 import { ScrollingNote } from "../ScrollingNote";
-import { notes } from "../../utils/constants";
-import { INotes } from "../../utils/interfaces";
-
-const scrollingNotes: INotes[] = [
-	{
-		...notes.G,
-		displayAftertimeSeconds: 0,
-	},
-	{
-		...notes.D,
-		displayAftertimeSeconds: 1,
-	},
-	{
-		...notes.S,
-		displayAftertimeSeconds: 3,
-	},
-	// {
-	// 	...notes.F,
-	// 	displayAftertimeSeconds: 3,
-	// },
-	// {
-	// 	...notes.F,
-	// 	displayAftertimeSeconds: 5,
-	// },
-	{
-		...notes.T,
-		displayAftertimeSeconds: 7,
-	},
-	{
-		...notes.U,
-		displayAftertimeSeconds: 8,
-	},
-];
+import { useNoteContext } from "../../context/NotesContext";
 
 export const NoteContainer = () => {
+	const { currentSong } = useNoteContext();
+
+	// If no current song is set, don't render any notes
+	if (!currentSong || currentSong.length === 0) {
+		return (
+			<Box
+				sx={{
+					position: "relative",
+					width: "100%",
+					height: "400px",
+					backgroundColor: "#eee",
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					overflow: "hidden",
+					border: "2px solid black",
+				}}
+			>
+				<Box sx={{ textAlign: "center", color: "#666" }}>
+					No song selected
+				</Box>
+			</Box>
+		);
+	}
+
 	return (
 		<Box
 			sx={{
@@ -53,7 +46,7 @@ export const NoteContainer = () => {
 					position: "relative",
 				}}
 			>
-				{scrollingNotes.map((note, index) => (
+				{currentSong.map((note, index) => (
 					<ScrollingNote key={index} note={note} />
 				))}
 			</Box>

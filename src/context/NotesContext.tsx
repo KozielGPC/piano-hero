@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useRef, useState } from "react";
-import { IActiveNote, IScore } from "../utils/interfaces";
+import React, { createContext, useContext, useRef, useState, ReactNode } from "react";
+import { IActiveNote, IScore, INotes } from "../utils/interfaces";
 
 interface NoteContextType {
 	activeNotes: IActiveNote[];
@@ -9,6 +9,8 @@ interface NoteContextType {
 	addNote: (input: IActiveNote) => void;
 	removeNote: (noteToBeRemoved: string) => void;
 	targetDivRef: React.RefObject<HTMLDivElement> | null;
+	currentSong: INotes[] | null;
+	setCurrentSong: React.Dispatch<React.SetStateAction<INotes[] | null>>;
 }
 
 const NoteContext = createContext<NoteContextType>({
@@ -19,9 +21,11 @@ const NoteContext = createContext<NoteContextType>({
 	addNote: () => {},
 	removeNote: () => {},
 	targetDivRef: null,
+	currentSong: null,
+	setCurrentSong: () => {},
 });
 
-export const NoteProvider = ({ children }: { children: React.ReactNode }) => {
+export const NoteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 	const targetDivRef = useRef<HTMLDivElement | null>(null);
 
 	const [activeNotes, setActiveNotes] = useState<IActiveNote[]>([]);
@@ -29,6 +33,7 @@ export const NoteProvider = ({ children }: { children: React.ReactNode }) => {
 		correctNotes: 0,
 		wrongNotes: 0,
 	});
+	const [currentSong, setCurrentSong] = useState<INotes[] | null>(null);
 
 	const addNote = ({ note, leftOffset }: IActiveNote) => {
 		setActiveNotes((prevNotes) => [...prevNotes, { note, leftOffset }]);
@@ -68,6 +73,8 @@ export const NoteProvider = ({ children }: { children: React.ReactNode }) => {
 				addWrongNote,
 				addCorrectNote,
 				targetDivRef,
+				currentSong,
+				setCurrentSong,
 			}}
 		>
 			{children}
