@@ -1,128 +1,112 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
 	Box,
+	Button,
+	Typography,
 	Card,
 	CardContent,
-	Typography,
-	Button,
 	Select,
 	MenuItem,
-	FormControl,
-	InputLabel,
+	LinearProgress,
+	Chip,
+	Stack,
+	Alert,
 	Fade,
 	Slide,
 	IconButton,
-	LinearProgress,
-	Alert,
-	Chip,
-	Stack,
-	Divider
 } from '@mui/material';
-import {
-	PlayArrow,
-	Pause,
+import { 
+	PlayArrow, 
+	Pause, 
 	Stop,
+	Edit, 
 	Upload,
-	MusicNote,
-	EmojiEvents,
-	Speed,
 	CheckCircle,
 	Cancel,
-	Edit
+	EmojiEvents,
+	Speed
 } from '@mui/icons-material';
+import { getAllSongs, addUploadedSong, importSongFromJSON } from '../../utils/songLibrary';
 import { useNoteContext } from '../../context/NotesContext';
-import { processMidiFile } from '../../utils/midiProcessor';
-import { Song, getAllSongs, getSongById, createSongFromMidi } from '../../utils/songLibrary';
-import { INotes } from '../../utils/interfaces';
 import { Piano } from '../Piano';
 import { NoteContainer } from '../NoteContainer';
 import SongEditor from '../SongEditor';
+import { INotes } from '../../utils/interfaces';
 
 type GameState = 'MENU' | 'PLAYING' | 'PAUSED' | 'ENDED' | 'LOADING' | 'SONG_EDITOR';
-
-interface GameStats {
-	accuracy: number;
-	totalNotes: number;
-	correctNotes: number;
-	wrongNotes: number;
-	score: number;
-}
 
 const GameController: React.FC = () => {
 	const [gameState, setGameState] = useState<GameState>('MENU');
 	const [selectedSongId, setSelectedSongId] = useState<string>('interstellar');
-	const [uploadedSongs, setUploadedSongs] = useState<Song[]>([]);
+	const [accuracy, setAccuracy] = useState<number>(0);
+	const [combo, setCombo] = useState<number>(0);
+	const [maxCombo, setMaxCombo] = useState<number>(0);
+	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [loadingMessage, setLoadingMessage] = useState<string>('');
+	const [importError, setImportError] = useState<string>('');
+	const [importSuccess, setImportSuccess] = useState<string>('');
 	const [error, setError] = useState<string>('');
-	const [gameStats, setGameStats] = useState<GameStats>({
-		accuracy: 0,
-		totalNotes: 0,
-		correctNotes: 0,
-		wrongNotes: 0,
-		score: 0
-	});
-
+	
 	const { 
-		score, 
+		score,
 		setCurrentSong
 	} = useNoteContext();
 
-	// Get all available songs
-	const allSongs = getAllSongs(uploadedSongs);
+	// Get all songs including uploaded ones
+	const allSongs = getAllSongs();
 
 	// Update game stats when score changes
 	useEffect(() => {
-		const correctNotes = score.correctNotes;
-		const wrongNotes = score.wrongNotes;
-		const totalNotes = correctNotes + wrongNotes;
-		const accuracy = totalNotes > 0 ? (correctNotes / totalNotes) * 100 : 0;
-		
-		setGameStats({
-			accuracy,
-			totalNotes,
-			correctNotes,
-			wrongNotes,
-			score: correctNotes * 10 // Simple scoring system
-		});
-	}, [score]);
+		if (score && typeof score === 'object') {
+			// Calculate accuracy based on score
+			const totalNotes = score.correctNotes + score.wrongNotes;
+			const calculatedAccuracy = totalNotes > 0 ? (score.correctNotes / totalNotes) * 100 : 0;
+			setAccuracy(calculatedAccuracy);
+			
+			// Update max combo if current combo is higher
+			if (combo > maxCombo) {
+				setMaxCombo(combo);
+			}
+		}
+	}, [score, combo, maxCombo]);
 
-	const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleSongSelect = (songId: string) => {
+		setSelectedSongId(songId);
+		const song = allSongs[songId];
+		if (song) {
+			setCurrentSong(song.notes);
+		}
+	};
+
+	const handleJSONImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
 
-		// Validate file type
-		if (!file.name.toLowerCase().endsWith('.mid') && !file.name.toLowerCase().endsWith('.midi')) {
-			setError('Please upload a valid MIDI file (.mid or .midi)');
-			return;
-		}
-
-		setError('');
-		setGameState('LOADING');
-		setLoadingMessage('Processing MIDI file...');
+		setIsLoading(true);
+		setImportError('');
+		setImportSuccess('');
 
 		try {
-			const notes = await processMidiFile(file);
-			const newSong = createSongFromMidi(file.name, notes);
+			const fileContent = await file.text();
+			const songData = await importSongFromJSON(fileContent);
 			
-			setUploadedSongs(prev => [...prev, newSong]);
-			setSelectedSongId(newSong.id);
-			setLoadingMessage('MIDI file processed successfully!');
+			// Add to uploaded songs
+			await addUploadedSong(songData);
 			
-			setTimeout(() => {
-				setGameState('MENU');
-				setLoadingMessage('');
-			}, 1500);
+			setImportSuccess(`Successfully imported "${songData.name}" by ${songData.artist}`);
 			
-		} catch (err) {
-			console.error('Error processing MIDI file:', err);
-			setError('Failed to process MIDI file. Please try a different file.');
-			setGameState('MENU');
-			setLoadingMessage('');
+			// Auto-select the imported song
+			setSelectedSongId(`uploaded_${Date.now()}`);
+			
+		} catch (error) {
+			console.error('Import error:', error);
+			setImportError(error instanceof Error ? error.message : 'Failed to import song');
+		} finally {
+			setIsLoading(false);
+			// Clear the file input
+			event.target.value = '';
 		}
-
-		// Reset file input
-		event.target.value = '';
-	}, []);
+	};
 
 	const startGame = useCallback(() => {
 		if (!selectedSongId) {
@@ -130,7 +114,7 @@ const GameController: React.FC = () => {
 			return;
 		}
 
-		const selectedSong = getSongById(selectedSongId, uploadedSongs);
+		const selectedSong = allSongs[selectedSongId];
 		if (!selectedSong) {
 			setError('Selected song not found');
 			return;
@@ -139,7 +123,7 @@ const GameController: React.FC = () => {
 		setError('');
 		setCurrentSong(selectedSong.notes);
 		setGameState('PLAYING');
-	}, [selectedSongId, uploadedSongs, setCurrentSong]);
+	}, [selectedSongId, setCurrentSong, allSongs]);
 
 	const pauseGame = useCallback(() => {
 		setGameState('PAUSED');
@@ -156,7 +140,6 @@ const GameController: React.FC = () => {
 	const returnToMenu = useCallback(() => {
 		setGameState('MENU');
 		setCurrentSong(null);
-		setError('');
 	}, [setCurrentSong]);
 
 	const openSongEditor = useCallback(() => {
@@ -169,155 +152,131 @@ const GameController: React.FC = () => {
 	}, [setCurrentSong]);
 
 	const renderMenuState = () => (
-		<Fade in={gameState === 'MENU'} timeout={500}>
-			<Card 
-				elevation={8}
+		<Box
+			sx={{
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				justifyContent: 'center',
+				height: '100%',
+				padding: '2rem',
+				textAlign: 'center',
+			}}
+		>
+			<Typography
+				variant="h3"
 				sx={{
-					background: 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-					backdropFilter: 'blur(10px)',
-					border: '1px solid rgba(255,255,255,0.1)',
-					borderRadius: 3,
-					maxWidth: 500,
-					width: '100%'
+					marginBottom: '3rem',
+					color: '#333',
+					fontWeight: 'bold',
+					textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
 				}}
 			>
-				<CardContent sx={{ p: 4 }}>
-					<Stack spacing={3}>
-						<Box textAlign="center">
-							<MusicNote sx={{ fontSize: 48, color: '#667eea', mb: 2 }} />
-							<Typography 
-								variant="h4" 
-								gutterBottom
-								sx={{
-									background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
-									backgroundClip: 'text',
-									WebkitBackgroundClip: 'text',
-									WebkitTextFillColor: 'transparent',
-									fontWeight: 'bold'
-								}}
-							>
-								Piano Hero
-							</Typography>
-							<Typography variant="body1" color="text.secondary">
-								Choose your song and start playing!
-							</Typography>
-						</Box>
+				Choose Your Challenge
+			</Typography>
 
-						<Divider />
+			{/* Error and Success Messages */}
+			{importError && (
+				<Alert severity="error" sx={{ mb: 2, width: '100%', maxWidth: 400 }} onClose={() => setImportError('')}>
+					{importError}
+				</Alert>
+			)}
 
-						{/* Song Selection */}
-						<FormControl fullWidth>
-							<InputLabel>Select Song</InputLabel>
-							<Select
-								value={selectedSongId}
-								label="Select Song"
-								onChange={(e) => setSelectedSongId(e.target.value)}
-							>
-								{allSongs.map((song) => (
-									<MenuItem key={song.id} value={song.id}>
-										<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-											<Box sx={{ flexGrow: 1 }}>
-												<Typography variant="body1">{song.name}</Typography>
-												{song.artist && (
-													<Typography variant="caption" color="text.secondary">
-														by {song.artist}
-													</Typography>
-												)}
-											</Box>
-											{song.difficulty && (
-												<Chip 
-													label={song.difficulty} 
-													size="small" 
-													color={
-														song.difficulty === 'Easy' ? 'success' : 
-														song.difficulty === 'Medium' ? 'warning' : 'error'
-													}
-												/>
-											)}
-										</Box>
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
+			{importSuccess && (
+				<Alert severity="success" sx={{ mb: 2, width: '100%', maxWidth: 400 }} onClose={() => setImportSuccess('')}>
+					{importSuccess}
+				</Alert>
+			)}
 
-						{/* File Upload */}
-						<Box>
-							<input
-								accept=".mid,.midi"
-								style={{ display: 'none' }}
-								id="midi-upload"
-								type="file"
-								onChange={handleFileUpload}
-							/>
-							<label htmlFor="midi-upload">
-								<Button
-									variant="outlined"
-									component="span"
-									startIcon={<Upload />}
-									fullWidth
-									sx={{
-										borderColor: 'rgba(255,255,255,0.3)',
-										color: 'text.primary',
-										'&:hover': {
-											borderColor: '#667eea',
-											backgroundColor: 'rgba(102, 126, 234, 0.1)'
-										}
-									}}
-								>
-									Upload MIDI File
-								</Button>
-							</label>
-							<Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-								Supported formats: .mid, .midi
-							</Typography>
-						</Box>
+			{/* Song Selection */}
+			<Card elevation={6} sx={{ padding: '2rem', marginBottom: '2rem', minWidth: '400px', backgroundColor: 'rgba(255,255,255,0.9)' }}>
+				<Typography variant="h6" sx={{ marginBottom: '1rem', color: '#555' }}>
+					Select a Song
+				</Typography>
+				<Select
+					value={selectedSongId}
+					onChange={(e) => handleSongSelect(e.target.value)}
+					fullWidth
+					sx={{ marginBottom: '1rem' }}
+				>
+					{Object.entries(allSongs).map(([id, song]) => (
+						<MenuItem key={id} value={id}>
+							{song.name} - {song.artist}
+						</MenuItem>
+					))}
+				</Select>
 
-						{error && (
-							<Alert severity="error" sx={{ mt: 2 }}>
-								{error}
-							</Alert>
-						)}
+				{/* JSON Import */}
+				<Box sx={{ mt: 2, mb: 2 }}>
+					<Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+						Or import a custom song:
+					</Typography>
+					<input
+						type="file"
+						accept=".json"
+						onChange={handleJSONImport}
+						style={{ display: 'none' }}
+						id="json-upload"
+					/>
+					<label htmlFor="json-upload">
+						<Button
+							variant="outlined"
+							component="span"
+							startIcon={<Upload />}
+							disabled={isLoading}
+							fullWidth
+						>
+							Import Song JSON
+						</Button>
+					</label>
+				</Box>
 
-						{/* Action Buttons */}
-						<Stack spacing={2}>
-							<Button
-								variant="contained"
-								size="large"
-								startIcon={<PlayArrow />}
-								onClick={startGame}
-								disabled={!selectedSongId}
-								sx={{
-									background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
-									boxShadow: '0 3px 5px 2px rgba(102, 126, 234, .3)',
-									'&:hover': {
-										background: 'linear-gradient(45deg, #5a67d8 30%, #6b46c1 90%)',
-									}
-								}}
-							>
-								Start Game
-							</Button>
-							
-							<Button
-								variant="outlined"
-								size="large"
-								startIcon={<Edit />}
-								onClick={openSongEditor}
-								sx={{
-									borderColor: 'rgba(255,255,255,0.3)',
-									color: 'text.primary',
-									'&:hover': {
-										borderColor: '#667eea',
-										backgroundColor: 'rgba(102, 126, 234, 0.1)'
-									}
-								}}
-							>
-								Song Editor
-							</Button>
-						</Stack>
-					</Stack>
-				</CardContent>
+				<Button
+					variant="contained"
+					size="large"
+					onClick={startGame}
+					disabled={!selectedSongId || isLoading}
+					startIcon={<PlayArrow />}
+					sx={{
+						padding: '1rem 2rem',
+						fontSize: '1.2rem',
+						background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+						boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+						'&:hover': {
+							background: 'linear-gradient(45deg, #FE8B8B 30%, #FFAE53 90%)',
+						},
+					}}
+				>
+					Start Game
+				</Button>
 			</Card>
-		</Fade>
+
+			{/* Song Editor Button */}
+			<Button
+				variant="outlined"
+				size="large"
+				onClick={() => setGameState('SONG_EDITOR')}
+				startIcon={<Edit />}
+				sx={{
+					padding: '1rem 2rem',
+					fontSize: '1.1rem',
+					marginBottom: '1rem',
+					borderColor: '#FF8E53',
+					color: '#FF8E53',
+					'&:hover': {
+						borderColor: '#FE6B8B',
+						backgroundColor: 'rgba(254, 107, 139, 0.1)',
+					},
+				}}
+			>
+				Song Editor
+			</Button>
+
+			{/* Instructions */}
+			<Typography variant="body1" sx={{ marginTop: '1rem', color: '#666', maxWidth: '600px' }}>
+				Use your keyboard to play the falling notes! Match the timing and build your combo for a higher score.
+			</Typography>
+		</Box>
 	);
 
 	const renderPlayingState = () => (
@@ -338,7 +297,7 @@ const GameController: React.FC = () => {
 						<Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
 							<Box>
 								<Typography variant="h6" color="white">
-									{getSongById(selectedSongId, uploadedSongs)?.name || 'Playing...'}
+									{allSongs[selectedSongId]?.name || 'Playing...'}
 								</Typography>
 								<Typography variant="body2" color="rgba(255,255,255,0.7)">
 									Use keyboard keys to play the falling notes
@@ -348,19 +307,19 @@ const GameController: React.FC = () => {
 							<Stack direction="row" spacing={1} alignItems="center">
 								<Chip 
 									icon={<CheckCircle />} 
-									label={`${gameStats.correctNotes}`} 
+									label={`Combo: ${combo}`} 
 									color="success" 
 									size="small"
 								/>
 								<Chip 
 									icon={<Cancel />} 
-									label={`${gameStats.wrongNotes}`} 
+									label={`Max: ${maxCombo}`} 
 									color="error" 
 									size="small"
 								/>
 								<Chip 
 									icon={<EmojiEvents />} 
-									label={`Score: ${gameStats.score}`} 
+									label={`Score: ${score}`} 
 									color="primary" 
 									variant="filled"
 								/>
@@ -469,35 +428,35 @@ const GameController: React.FC = () => {
 						<Box display="flex" justifyContent="space-between" alignItems="center">
 							<Typography variant="h6">Final Score:</Typography>
 							<Typography variant="h6" color="primary.main" fontWeight="bold">
-								{gameStats.score}
+								{(score && typeof score === 'object' ? score.correctNotes * 10 : 0)}
 							</Typography>
 						</Box>
 						
 						<Box display="flex" justifyContent="space-between" alignItems="center">
 							<Typography>Accuracy:</Typography>
 							<Typography color="primary.main" fontWeight="bold">
-								{gameStats.accuracy.toFixed(1)}%
+								{accuracy.toFixed(1)}%
 							</Typography>
 						</Box>
 						
 						<Box display="flex" justifyContent="space-between" alignItems="center">
 							<Typography>Correct Notes:</Typography>
 							<Typography color="success.main" fontWeight="bold">
-								{gameStats.correctNotes}
+								{(score && typeof score === 'object' ? score.correctNotes : 0)}
 							</Typography>
 						</Box>
 						
 						<Box display="flex" justifyContent="space-between" alignItems="center">
 							<Typography>Wrong Notes:</Typography>
 							<Typography color="error.main" fontWeight="bold">
-								{gameStats.wrongNotes}
+								{(score && typeof score === 'object' ? score.wrongNotes : 0)}
 							</Typography>
 						</Box>
 						
 						<Box display="flex" justifyContent="space-between" alignItems="center">
-							<Typography>Total Notes:</Typography>
-							<Typography fontWeight="bold">
-								{gameStats.totalNotes}
+							<Typography>Max Combo:</Typography>
+							<Typography color="primary.main" fontWeight="bold">
+								{maxCombo}
 							</Typography>
 						</Box>
 					</Stack>
@@ -557,7 +516,13 @@ const GameController: React.FC = () => {
 	);
 
 	const renderSongEditorState = () => (
-		<SongEditor onBackToMenu={returnToMenu} onPlaySong={playEditorSong} />
+		<SongEditor 
+			onBack={() => setGameState('MENU')}
+			onPlaySong={(songNotes) => {
+				setCurrentSong(songNotes);
+				setGameState('PLAYING');
+			}}
+		/>
 	);
 
 	return (

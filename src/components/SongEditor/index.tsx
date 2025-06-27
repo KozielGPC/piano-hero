@@ -111,18 +111,11 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
         height: 60,
         normalize: true,
         backend: 'WebAudio',
-        interact: true,
-        responsive: true
+        interact: true
       });
 
       // Event handlers for time updates and interactions
       wavesurfer.current.on('audioprocess', (time: number) => {
-        setCurrentTime(time);
-        lastTimeRef.current = time;
-      });
-
-      wavesurfer.current.on('seek', (progress: number) => {
-        const time = progress * songData.duration;
         setCurrentTime(time);
         lastTimeRef.current = time;
       });
@@ -155,8 +148,8 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
         }
       });
 
-      wavesurfer.current.on('error', (err: string) => {
-        setError(`Audio error: ${err}`);
+      wavesurfer.current.on('error', (error: Error) => {
+        setError(`Audio error: ${error.message}`);
         setIsPlaying(false);
       });
     }
@@ -325,9 +318,10 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
       const currentTimeInRange = currentTime >= noteStartTime - LOOKAHEAD_TIME && currentTime <= noteEndTime + 1;
 
       if (currentTimeInRange) {
-        // Calculate note position
-        const timeProgress = (currentTime - noteStartTime + LOOKAHEAD_TIME) / LOOKAHEAD_TIME;
-        const y = (1 - timeProgress) * (CANVAS_HEIGHT - PIANO_HEIGHT - 50) + 10;
+        // Calculate note position - notes should fall from top to bottom
+        const timeUntilNote = noteStartTime - currentTime;
+        const fallProgress = (LOOKAHEAD_TIME - timeUntilNote) / LOOKAHEAD_TIME;
+        const y = fallProgress * (CANVAS_HEIGHT - PIANO_HEIGHT - 50) + 10;
         
         // Only draw if note is visible
         if (y >= -50 && y <= CANVAS_HEIGHT) {
