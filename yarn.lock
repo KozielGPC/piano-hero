@@ -601,6 +601,11 @@
   dependencies:
     "@babel/types" "^7.20.7"
 
+"@types/debounce@*":
+  version "1.2.4"
+  resolved "https://registry.npmjs.org/@types/debounce/-/debounce-1.2.4.tgz"
+  integrity sha512-jBqiORIzKDOToaF63Fm//haOCHuwQuLa2202RK4MozpA6lh93eCBc+/8+wZn5OzjJt3ySdc+74SXWXB55Ewtyw==
+
 "@types/estree@1.0.5":
   version "1.0.5"
   resolved "https://registry.npmjs.org/@types/estree/-/estree-1.0.5.tgz"
@@ -642,6 +647,13 @@
   dependencies:
     "@types/prop-types" "*"
     csstype "^3.0.2"
+
+"@types/wavesurfer.js@^6.0.12":
+  version "6.0.12"
+  resolved "https://registry.npmjs.org/@types/wavesurfer.js/-/wavesurfer.js-6.0.12.tgz"
+  integrity sha512-oM9hYlPIVms4uwwoaGs9d0qp7Xk7IjSGkdwgmhUymVUIIilRfjtSQvoOgv4dpKiW0UozWRSyXfQqTobi0qWyCw==
+  dependencies:
+    "@types/debounce" "*"
 
 "@typescript-eslint/eslint-plugin@^7.13.1":
   version "7.16.0"
@@ -2160,6 +2172,11 @@ w3c-xmlserializer@^4.0.0:
   integrity sha512-d+BFHzbiCx6zGfz0HyQ6Rg69w9k19nviJspaj4yNscGjrHu94sVP+aRm75yEbCh+r2/yR+7q6hux9LVtbuTGBw==
   dependencies:
     xml-name-validator "^4.0.0"
+
+wavesurfer.js@^7.9.8:
+  version "7.9.8"
+  resolved "https://registry.npmjs.org/wavesurfer.js/-/wavesurfer.js-7.9.8.tgz"
+  integrity sha512-Mxz6qRwkSmuWVxLzp0XQ6EzSv1FTvQgMEUJTirLN1Ox76sn0YeyQlI99WuE+B0IuxShPHXIhvEuoBSJdaQs7tA==
 
 webidl-conversions@^7.0.0:
   version "7.0.0"

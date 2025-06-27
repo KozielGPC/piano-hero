@@ -27,15 +27,18 @@ import {
 	EmojiEvents,
 	Speed,
 	CheckCircle,
-	Cancel
+	Cancel,
+	Edit
 } from '@mui/icons-material';
 import { useNoteContext } from '../../context/NotesContext';
 import { processMidiFile } from '../../utils/midiProcessor';
 import { Song, getAllSongs, getSongById, createSongFromMidi } from '../../utils/songLibrary';
+import { INotes } from '../../utils/interfaces';
 import { Piano } from '../Piano';
 import { NoteContainer } from '../NoteContainer';
+import SongEditor from '../SongEditor';
 
-type GameState = 'MENU' | 'PLAYING' | 'PAUSED' | 'ENDED' | 'LOADING';
+type GameState = 'MENU' | 'PLAYING' | 'PAUSED' | 'ENDED' | 'LOADING' | 'SONG_EDITOR';
 
 interface GameStats {
 	accuracy: number;
@@ -156,6 +159,15 @@ const GameController: React.FC = () => {
 		setError('');
 	}, [setCurrentSong]);
 
+	const openSongEditor = useCallback(() => {
+		setGameState('SONG_EDITOR');
+	}, []);
+
+	const playEditorSong = useCallback((songNotes: INotes[]) => {
+		setCurrentSong(songNotes);
+		setGameState('PLAYING');
+	}, [setCurrentSong]);
+
 	const renderMenuState = () => (
 		<Fade in={gameState === 'MENU'} timeout={500}>
 			<Card 
@@ -266,23 +278,42 @@ const GameController: React.FC = () => {
 							</Alert>
 						)}
 
-						{/* Start Game Button */}
-						<Button
-							variant="contained"
-							size="large"
-							startIcon={<PlayArrow />}
-							onClick={startGame}
-							disabled={!selectedSongId}
-							sx={{
-								background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
-								boxShadow: '0 3px 5px 2px rgba(102, 126, 234, .3)',
-								'&:hover': {
-									background: 'linear-gradient(45deg, #5a67d8 30%, #6b46c1 90%)',
-								}
-							}}
-						>
-							Start Game
-						</Button>
+						{/* Action Buttons */}
+						<Stack spacing={2}>
+							<Button
+								variant="contained"
+								size="large"
+								startIcon={<PlayArrow />}
+								onClick={startGame}
+								disabled={!selectedSongId}
+								sx={{
+									background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
+									boxShadow: '0 3px 5px 2px rgba(102, 126, 234, .3)',
+									'&:hover': {
+										background: 'linear-gradient(45deg, #5a67d8 30%, #6b46c1 90%)',
+									}
+								}}
+							>
+								Start Game
+							</Button>
+							
+							<Button
+								variant="outlined"
+								size="large"
+								startIcon={<Edit />}
+								onClick={openSongEditor}
+								sx={{
+									borderColor: 'rgba(255,255,255,0.3)',
+									color: 'text.primary',
+									'&:hover': {
+										borderColor: '#667eea',
+										backgroundColor: 'rgba(102, 126, 234, 0.1)'
+									}
+								}}
+							>
+								Song Editor
+							</Button>
+						</Stack>
 					</Stack>
 				</CardContent>
 			</Card>
@@ -525,6 +556,10 @@ const GameController: React.FC = () => {
 		</Fade>
 	);
 
+	const renderSongEditorState = () => (
+		<SongEditor onBackToMenu={returnToMenu} onPlaySong={playEditorSong} />
+	);
+
 	return (
 		<Box
 			display="flex"
@@ -538,6 +573,12 @@ const GameController: React.FC = () => {
 					minHeight: '80vh',
 					alignItems: 'flex-start',
 					pt: 2
+				}),
+				...(gameState === 'SONG_EDITOR' && {
+					minHeight: '100vh',
+					alignItems: 'flex-start',
+					pt: 1,
+					p: 1
 				})
 			}}
 		>
@@ -546,6 +587,7 @@ const GameController: React.FC = () => {
 			{gameState === 'PAUSED' && renderPausedState()}
 			{gameState === 'ENDED' && renderEndedState()}
 			{gameState === 'LOADING' && renderLoadingState()}
+			{gameState === 'SONG_EDITOR' && renderSongEditorState()}
 		</Box>
 	);
 };
