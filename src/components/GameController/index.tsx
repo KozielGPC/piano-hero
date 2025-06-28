@@ -376,16 +376,24 @@ const GameController: React.FC = () => {
 								<Chip 
 									icon={<CheckCircle />} 
 									label={`Correct: ${(score && typeof score === 'object' ? score.correctNotes : 0)}`} 
-									color="success" 
+									sx={{
+										backgroundColor: '#4caf50',
+										color: 'white',
+										fontWeight: 'bold',
+										'& .MuiChip-icon': { color: 'white' }
+									}}
 									size="small"
-									variant="outlined"
 								/>
 								<Chip 
 									icon={<Cancel />} 
 									label={`Wrong: ${(score && typeof score === 'object' ? score.wrongNotes : 0)}`} 
-									color="error" 
+									sx={{
+										backgroundColor: '#f44336',
+										color: 'white',
+										fontWeight: 'bold',
+										'& .MuiChip-icon': { color: 'white' }
+									}}
 									size="small"
-									variant="outlined"
 								/>
 								
 								<IconButton 
