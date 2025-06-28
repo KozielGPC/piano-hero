@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
 	Box,
 	Button,
@@ -24,7 +24,8 @@ import {
 	CheckCircle,
 	Cancel,
 	EmojiEvents,
-	Speed
+	Speed,
+	Star
 } from '@mui/icons-material';
 import { getAllSongs, addUploadedSong, importSongFromJSON } from '../../utils/songLibrary';
 import { useNoteContext } from '../../context/NotesContext';
@@ -47,9 +48,13 @@ const GameController: React.FC = () => {
 	const [importSuccess, setImportSuccess] = useState<string>('');
 	const [error, setError] = useState<string>('');
 	
+	// Add ref to track previous score for combo calculation
+	const prevScoreRef = useRef<{correctNotes: number, wrongNotes: number} | null>(null);
+	
 	const { 
 		score,
-		setCurrentSong
+		setCurrentSong,
+		resetScore
 	} = useNoteContext();
 
 	// Get all songs including uploaded ones
@@ -63,12 +68,34 @@ const GameController: React.FC = () => {
 			const calculatedAccuracy = totalNotes > 0 ? (score.correctNotes / totalNotes) * 100 : 0;
 			setAccuracy(calculatedAccuracy);
 			
-			// Update max combo if current combo is higher
-			if (combo > maxCombo) {
-				setMaxCombo(combo);
+			// Handle combo logic
+			const prevScore = prevScoreRef.current;
+			if (prevScore) {
+				// Check if wrong notes increased (combo breaker)
+				if (score.wrongNotes > prevScore.wrongNotes) {
+					setCombo(0);
+				}
+				// Check if correct notes increased (combo increment)
+				else if (score.correctNotes > prevScore.correctNotes) {
+					setCombo(prevCombo => {
+						const newCombo = prevCombo + 1;
+						// Update max combo if current combo is higher
+						setMaxCombo(prevMax => Math.max(prevMax, newCombo));
+						return newCombo;
+					});
+				}
+			} else {
+				// First score update, initialize combo
+				if (score.correctNotes > 0) {
+					setCombo(score.correctNotes);
+					setMaxCombo(score.correctNotes);
+				}
 			}
+			
+			// Update previous score reference
+			prevScoreRef.current = { correctNotes: score.correctNotes, wrongNotes: score.wrongNotes };
 		}
-	}, [score, combo, maxCombo]);
+	}, [score]);
 
 	const handleSongSelect = (songId: string) => {
 		setSelectedSongId(songId);
@@ -121,9 +148,17 @@ const GameController: React.FC = () => {
 		}
 
 		setError('');
+		// Reset game stats for new game
+		setCombo(0);
+		setMaxCombo(0);
+		setAccuracy(0);
+		prevScoreRef.current = null;
+		// Reset score in context
+		resetScore();
+		
 		setCurrentSong(selectedSong.notes);
 		setGameState('PLAYING');
-	}, [selectedSongId, setCurrentSong, allSongs]);
+	}, [selectedSongId, setCurrentSong, allSongs, resetScore]);
 
 	const pauseGame = useCallback(() => {
 		setGameState('PAUSED');
@@ -140,6 +175,11 @@ const GameController: React.FC = () => {
 	const returnToMenu = useCallback(() => {
 		setGameState('MENU');
 		setCurrentSong(null);
+		// Reset game stats when returning to menu
+		setCombo(0);
+		setMaxCombo(0);
+		setAccuracy(0);
+		prevScoreRef.current = null;
 	}, [setCurrentSong]);
 
 	const openSongEditor = useCallback(() => {
@@ -176,6 +216,12 @@ const GameController: React.FC = () => {
 			</Typography>
 
 			{/* Error and Success Messages */}
+			{error && (
+				<Alert severity="error" sx={{ mb: 2, width: '100%', maxWidth: 400 }} onClose={() => setError('')}>
+					{error}
+				</Alert>
+			)}
+
 			{importError && (
 				<Alert severity="error" sx={{ mb: 2, width: '100%', maxWidth: 400 }} onClose={() => setImportError('')}>
 					{importError}
@@ -312,16 +358,34 @@ const GameController: React.FC = () => {
 									size="small"
 								/>
 								<Chip 
-									icon={<Cancel />} 
+									icon={<Star />} 
 									label={`Max: ${maxCombo}`} 
-									color="error" 
+									sx={{ 
+										backgroundColor: '#ffd700', 
+										color: '#333',
+										'& .MuiChip-icon': { color: '#333' }
+									}}
 									size="small"
 								/>
 								<Chip 
 									icon={<EmojiEvents />} 
-									label={`Score: ${score}`} 
+									label={`Score: ${(score && typeof score === 'object' ? score.correctNotes * 10 : 0)}`} 
 									color="primary" 
 									variant="filled"
+								/>
+								<Chip 
+									icon={<CheckCircle />} 
+									label={`Correct: ${(score && typeof score === 'object' ? score.correctNotes : 0)}`} 
+									color="success" 
+									size="small"
+									variant="outlined"
+								/>
+								<Chip 
+									icon={<Cancel />} 
+									label={`Wrong: ${(score && typeof score === 'object' ? score.wrongNotes : 0)}`} 
+									color="error" 
+									size="small"
+									variant="outlined"
 								/>
 								
 								<IconButton 
@@ -518,10 +582,7 @@ const GameController: React.FC = () => {
 	const renderSongEditorState = () => (
 		<SongEditor 
 			onBack={() => setGameState('MENU')}
-			onPlaySong={(songNotes) => {
-				setCurrentSong(songNotes);
-				setGameState('PLAYING');
-			}}
+			onPlaySong={playEditorSong}
 		/>
 	);
 

@@ -8,6 +8,7 @@ interface NoteContextType {
 	addCorrectNote: (note: string) => void;
 	addNote: (input: IActiveNote) => void;
 	removeNote: (noteToBeRemoved: string) => void;
+	resetScore: () => void;
 	targetDivRef: React.RefObject<HTMLDivElement> | null;
 	currentSong: INotes[] | null;
 	setCurrentSong: React.Dispatch<React.SetStateAction<INotes[] | null>>;
@@ -20,6 +21,7 @@ const NoteContext = createContext<NoteContextType>({
 	addCorrectNote: () => {},
 	addNote: () => {},
 	removeNote: () => {},
+	resetScore: () => {},
 	targetDivRef: null,
 	currentSong: null,
 	setCurrentSong: () => {},
@@ -63,6 +65,11 @@ export const NoteProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		});
 	};
 
+	const resetScore = () => {
+		setScore({ correctNotes: 0, wrongNotes: 0 });
+		setActiveNotes([]);
+	};
+
 	return (
 		<NoteContext.Provider
 			value={{
@@ -72,6 +79,7 @@ export const NoteProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				score,
 				addWrongNote,
 				addCorrectNote,
+				resetScore,
 				targetDivRef,
 				currentSong,
 				setCurrentSong,
