@@ -12,11 +12,20 @@ It's deployed on Vercel. You can play online clicking [here](https://kozi-piano-
 
 ### Screenshots
 
-![image](https://github.com/user-attachments/assets/77b26e6a-8e7b-44af-8407-e8c0767e01c3)
+![image](https://github.com/user-attachments/assets/14344ce7-bf87-4f75-964e-ae2ca1ebd978)
 
 
-![image](https://github.com/user-attachments/assets/7ab61bb2-9dc6-4e21-b1cb-b250a75f7bd2)
+![image](https://github.com/user-attachments/assets/63d24723-2432-4fc6-b8a9-b6648886800c)
 
+![image](https://github.com/user-attachments/assets/43f6b219-0a64-4057-9343-1fc367fdffd6)
+
+![image](https://github.com/user-attachments/assets/976a1096-3721-45f3-96e4-db0b5a692183)
+
+![image](https://github.com/user-attachments/assets/4ac62a54-f576-4199-894a-1f74052864a0)
+
+![image](https://github.com/user-attachments/assets/b0b095a2-040c-412b-bc44-555bd9366635)
+
+![image](https://github.com/user-attachments/assets/a602d345-c2dd-42d3-b860-82091bdd1022)
 
 
 ### Technologies
