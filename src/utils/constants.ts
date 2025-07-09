@@ -7,7 +7,7 @@ export enum NoteType {
 
 export const notes = {
 	Qb: {
-		offset: -11,
+		offset: -13,
 		note: "2",
 		type: NoteType.black,
 		fileName: "Db4.mp3",

@@ -39,11 +39,127 @@ import {
 import WaveSurfer from 'wavesurfer.js';
 import { notes, NoteType } from '../../utils/constants';
 import { INotes } from '../../utils/interfaces';
-import { Piano } from '../Piano';
+// Removed separate Piano component – the piano is now drawn directly inside the canvas
 
 const CANVAS_HEIGHT = 400;
 const PIANO_HEIGHT = 80;
 const LOOKAHEAD_TIME = 4; // seconds
+
+// ----------------------------------------------------------------------------
+// Canvas-based piano helpers
+// ----------------------------------------------------------------------------
+
+// Horizontal size unit (1 semitone) in pixels. White keys span 2 units, black 1.2.
+const OFFSET_UNIT = 20;
+const WHITE_KEY_WIDTH = OFFSET_UNIT * 2;
+const BLACK_KEY_WIDTH = OFFSET_UNIT * 1.2;
+
+// Cache audio elements for replay efficiency
+const audioCache: Map<string, HTMLAudioElement> = new Map();
+
+// Map of active highlighted keys → expiry timestamp
+const activeKeys: Map<string, number> = new Map();
+// Duration of highlight in ms
+const KEY_HIGHLIGHT_MS = 150;
+
+const playNoteAudio = (noteKey: string) => {
+  const noteData = notes[noteKey as keyof typeof notes];
+  if (!noteData) return;
+
+  let audio = audioCache.get(noteKey);
+  if (!audio) {
+    audio = new Audio(`/sounds/${noteData.fileName}`);
+    audioCache.set(noteKey, audio);
+  }
+  // restart from beginning for rapid re-trigger
+  audio.currentTime = 0;
+  audio.play().catch(() => {/* ignore */});
+
+  // mark key as active for animation
+  activeKeys.set(noteKey, performance.now() + KEY_HIGHLIGHT_MS);
+};
+
+// Precompute white key offsets for fast lookup
+const WHITE_OFFSETS = Object.values(notes)
+  .filter((n) => n.type === NoteType.white)
+  .map((n) => n.offset);
+
+// Helper to get the X center (in px) for any key based on its offset
+const getKeyCenterX = (offset: number, canvasCenterX: number): number => {
+  // For white keys, offset already correct
+  if (Number.isInteger(offset)) {
+    return canvasCenterX + offset * OFFSET_UNIT;
+  }
+
+  // For black keys, place it midway between neighboring whites
+  const leftWhite = Math.max(...WHITE_OFFSETS.filter((o) => o < offset));
+  const rightWhite = Math.min(...WHITE_OFFSETS.filter((o) => o > offset));
+  const avg = (leftWhite + rightWhite) / 2;
+  return canvasCenterX + avg * OFFSET_UNIT;
+};
+
+const drawPianoKeys = (
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number
+) => {
+  // Draw white keys first so black keys can overlay them
+  const drawnWhiteOffsets = new Set<number>();
+  Object.entries(notes).forEach(([key, value]) => {
+    const noteData = value as (typeof notes)[keyof typeof notes];
+    if (noteData.type === NoteType.white && !drawnWhiteOffsets.has(noteData.offset)) {
+      const wx = getKeyCenterX(noteData.offset, canvasWidth / 2);
+      // If key is currently active, use highlight colour
+      const isActive = activeKeys.has(key) && activeKeys.get(key)! > performance.now();
+      ctx.fillStyle = isActive ? '#ffeb3b' : '#fff';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.fillRect(
+        wx - WHITE_KEY_WIDTH / 2,
+        CANVAS_HEIGHT - PIANO_HEIGHT,
+        WHITE_KEY_WIDTH,
+        PIANO_HEIGHT
+      );
+      ctx.strokeRect(
+        wx - WHITE_KEY_WIDTH / 2,
+        CANVAS_HEIGHT - PIANO_HEIGHT,
+        WHITE_KEY_WIDTH,
+        PIANO_HEIGHT
+      );
+
+      // Draw label (musical note or keyboard char)
+      ctx.fillStyle = '#000';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(key, wx, CANVAS_HEIGHT - 8);
+
+      drawnWhiteOffsets.add(noteData.offset);
+    }
+  });
+
+  // Draw black keys on top of the white keys
+  const BLACK_KEY_HEIGHT = PIANO_HEIGHT * 0.6;
+  Object.entries(notes).forEach(([key, value]) => {
+    const noteData = value as (typeof notes)[keyof typeof notes];
+    if (noteData.type === NoteType.black) {
+      const bx = getKeyCenterX(noteData.offset, canvasWidth / 2);
+      // If key is currently active, use highlight colour
+      const isActive = activeKeys.has(key) && activeKeys.get(key)! > performance.now();
+      ctx.fillStyle = isActive ? '#ffeb3b' : '#000';
+      ctx.fillRect(
+        bx - BLACK_KEY_WIDTH / 2,
+        CANVAS_HEIGHT - PIANO_HEIGHT,
+        BLACK_KEY_WIDTH,
+        BLACK_KEY_HEIGHT
+      );
+
+      // Label for black keys (draw in white for visibility)
+      ctx.fillStyle = '#fff';
+      ctx.font = '9px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(key, bx, CANVAS_HEIGHT - PIANO_HEIGHT + 12);
+    }
+  });
+};
 
 interface EditorNote {
   id: string;
@@ -69,6 +185,7 @@ interface SongEditorProps {
 }
 
 const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
+  // No hook needed for activeKeys (module-level map)
   const [songData, setSongData] = useState<SongData>({
     name: '',
     artist: '',
@@ -176,6 +293,19 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
     };
   }, [songData.notes, currentTime]);
 
+  // Cleanup expired highlights each animation frame
+  const pruneHighlights = () => {
+    const now = performance.now();
+    activeKeys.forEach((expiry, k) => {
+      if (expiry < now) activeKeys.delete(k);
+    });
+  };
+
+  useEffect(() => {
+    const interval = setInterval(pruneHighlights, 50);
+    return () => clearInterval(interval);
+  }, []);
+
   const seekToTime = (time: number) => {
     if (!wavesurfer.current || songData.duration === 0) return;
     
@@ -278,14 +408,36 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas || selectedNotes.length === 0) return;
+    if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
-    // Only add notes if clicking in the falling area (not on piano)
+    // Click in falling area → add note (old behaviour)
     if (y < CANVAS_HEIGHT - PIANO_HEIGHT) {
+      if (selectedNotes.length === 0) return; // no note selected
       addNote();
+      return;
+    }
+
+    // Click inside piano area → play that key
+    const canvasCenterX = canvas.width / 2;
+    // Find nearest key center
+    let nearestKey: string | null = null;
+    let minDist = Number.MAX_VALUE;
+    Object.keys(notes).forEach((keyLabel) => {
+      const offset = notes[keyLabel as keyof typeof notes].offset;
+      const cx = getKeyCenterX(offset, canvasCenterX);
+      const dist = Math.abs(cx - x);
+      if (dist < minDist) {
+        minDist = dist;
+        nearestKey = keyLabel;
+      }
+    });
+
+    if (nearestKey && minDist <= WHITE_KEY_WIDTH / 2) {
+      playNoteAudio(nearestKey);
     }
   };
 
@@ -311,6 +463,9 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
     ctx.fillStyle = '#e0e0e0';
     ctx.fillRect(0, CANVAS_HEIGHT - PIANO_HEIGHT, canvas.width, PIANO_HEIGHT);
 
+    // Paint the piano keys so they share the same coordinate system as notes
+    drawPianoKeys(ctx, canvas.width);
+
     // Draw notes
     songData.notes.forEach(note => {
       const noteStartTime = note.time;
@@ -329,7 +484,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
             const noteData = notes[key as keyof typeof notes];
             if (noteData) {
               // Calculate x position based on note offset
-              const x = (canvas.width / 2) + (noteData.offset * 20) + (index * 5);
+              const x = getKeyCenterX(noteData.offset, canvas.width / 2) + (index * 5);
               
               // Draw note
               ctx.fillStyle = noteData.type === NoteType.black ? '#333' : '#fff';
@@ -455,6 +610,21 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Keyboard support – play note sounds when user presses mapped keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const pressed = e.key.toLowerCase();
+      const entry = Object.entries(notes).find(
+        ([, v]) => v.note.toLowerCase() === pressed
+      );
+      if (entry) {
+        playNoteAudio(entry[0]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
@@ -609,32 +779,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
             />
           </Paper>
 
-          {/* Piano Component with better overflow protection and responsive scaling */}
-          <Box sx={{ 
-            mt: 2,
-            width: '100%',
-            overflow: 'hidden', // Prevent overflow
-            border: '1px solid #ddd',
-            borderRadius: 1,
-            backgroundColor: '#f8f8f8',
-            p: 1
-          }}>
-            <Box sx={{
-              width: 'fit-content',
-              maxWidth: '100%',
-              transform: {
-                xs: 'scale(0.6)', // Extra small screens
-                sm: 'scale(0.7)', // Small screens  
-                md: 'scale(0.8)', // Medium screens
-                lg: 'scale(0.9)', // Large screens
-                xl: 'scale(1.0)'  // Extra large screens
-              },
-              transformOrigin: 'center',
-              mx: 'auto'
-            }}>
-              <Piano />
-            </Box>
-          </Box>
+          {/* Piano is now rendered directly inside the canvas for perfect alignment */}
         </CardContent>
       </Card>
 
