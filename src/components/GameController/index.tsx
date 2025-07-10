@@ -29,8 +29,8 @@ import {
 } from '@mui/icons-material';
 import { getAllSongs, addUploadedSong, importSongFromJSON } from '../../utils/songLibrary';
 import { useNoteContext } from '../../context/NotesContext';
-import { Piano } from '../Piano';
-import { NoteContainer } from '../NoteContainer';
+import InteractivePianoCanvas, { IFallingNote } from '../InteractivePianoCanvas';
+import { notes } from '../../utils/constants';
 import SongEditor from '../SongEditor';
 import { INotes } from '../../utils/interfaces';
 
@@ -42,8 +42,11 @@ const GameController: React.FC = () => {
 	const [accuracy, setAccuracy] = useState<number>(0);
 	const [combo, setCombo] = useState<number>(0);
 	const [maxCombo, setMaxCombo] = useState<number>(0);
+	// Track game time for canvas animation
+	const [currentTime, setCurrentTime] = useState<number>(0);
+	const animationRef = useRef<number>();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [loadingMessage, setLoadingMessage] = useState<string>('');
+	const [loadingMessage] = useState<string>('');
 	const [importError, setImportError] = useState<string>('');
 	const [importSuccess, setImportSuccess] = useState<string>('');
 	const [error, setError] = useState<string>('');
@@ -54,7 +57,8 @@ const GameController: React.FC = () => {
 	const { 
 		score,
 		setCurrentSong,
-		resetScore
+		resetScore,
+		currentSong
 	} = useNoteContext();
 
 	// Get all songs including uploaded ones
@@ -96,6 +100,39 @@ const GameController: React.FC = () => {
 			prevScoreRef.current = { correctNotes: score.correctNotes, wrongNotes: score.wrongNotes };
 		}
 	}, [score]);
+
+	// Drive time progression while playing
+	useEffect(() => {
+		if (gameState !== 'PLAYING') {
+			if (animationRef.current) cancelAnimationFrame(animationRef.current);
+			return;
+		}
+		const start = performance.now() - currentTime * 1000; // resume support
+		const step = (ts: number) => {
+			setCurrentTime((ts - start) / 1000);
+			animationRef.current = requestAnimationFrame(step);
+		};
+		animationRef.current = requestAnimationFrame(step);
+		return () => {
+			if (animationRef.current) cancelAnimationFrame(animationRef.current);
+		};
+	}, [gameState]);
+
+	// Convert current song notes to falling-note format for the canvas. We need the note key (e.g., "Q", "Qb")
+	// so that InteractivePianoCanvas can look it up in the global `notes` map.
+	const fallingNotes: IFallingNote[] = (currentSong || []).map((n) => {
+  // Find the constant-key (e.g., "Q", "Qb", "Z") whose `note` char matches the saved value
+  const entry = Object.entries(notes).find(([, v]) => v.note.toLowerCase() === n.note.toLowerCase());
+  const keyName = entry ? entry[0] : n.note; // fallback to original if not found
+
+  return {
+    note: keyName,
+    offset: n.offset,
+    type: n.type,
+    time: n.displayAftertimeSeconds,
+    duration: 1,
+  } as IFallingNote;
+});
 
 	const handleSongSelect = (songId: string) => {
 		setSelectedSongId(songId);
@@ -155,6 +192,7 @@ const GameController: React.FC = () => {
 		prevScoreRef.current = null;
 		// Reset score in context
 		resetScore();
+		setCurrentTime(0);
 		
 		setCurrentSong(selectedSong.notes);
 		setGameState('PLAYING');
@@ -181,10 +219,6 @@ const GameController: React.FC = () => {
 		setAccuracy(0);
 		prevScoreRef.current = null;
 	}, [setCurrentSong]);
-
-	const openSongEditor = useCallback(() => {
-		setGameState('SONG_EDITOR');
-	}, []);
 
 	const playEditorSong = useCallback((songNotes: INotes[]) => {
 		setCurrentSong(songNotes);
@@ -417,14 +451,14 @@ const GameController: React.FC = () => {
 			{/* Game Area */}
 			<Slide direction="up" in={gameState === 'PLAYING'} timeout={700}>
 				<Box>
-					{/* Falling Notes Area */}
+					{/* Combined falling notes + piano canvas */}
 					<Box sx={{ mb: 2 }}>
-						<NoteContainer />
-					</Box>
-					
-					{/* Piano */}
-					<Box>
-						<Piano />
+						<InteractivePianoCanvas
+							notes={fallingNotes}
+							currentTime={currentTime}
+							width={800}
+							height={400}
+						/>
 					</Box>
 				</Box>
 			</Slide>
