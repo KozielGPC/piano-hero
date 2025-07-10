@@ -38,7 +38,7 @@ import {
 } from '@mui/icons-material';
 import WaveSurfer from 'wavesurfer.js';
 import { notes, NoteType } from '../../utils/constants';
-import InteractivePianoCanvas, { IFallingNote } from '../InteractivePianoCanvas';
+import InteractivePianoCanvas, { IFallingNote } from '../PianoCanvas';
 import { INotes } from '../../utils/interfaces';
 // Removed separate Piano component – the piano is now drawn directly inside the canvas
 
