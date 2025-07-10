@@ -57,7 +57,7 @@ const InteractivePianoCanvas: React.FC<Props> = ({
     audio.currentTime = 0;
     audio.play().catch(() => {});
     activeKeys.set(keyLabel, performance.now() + KEY_HIGHLIGHT_MS);
-    drawCanvas(); // immediate redraw to show highlight
+    // No immediate full redraw – the highlight timer will pick it up, avoiding note flash
   };
 
   // Drawing helpers
@@ -123,15 +123,35 @@ const InteractivePianoCanvas: React.FC<Props> = ({
       const noteData = notes[note.note as keyof typeof notes];
       if (!noteData) return;
       const x = getKeyCenterX(noteData.offset, canvas.width / 2);
-      ctx.fillStyle = noteData.type === NoteType.black ? '#333' : '#fff';
+      // Match the rectangle width to the actual key width for perfect alignment
+      const keyWidth = noteData.type === NoteType.black ? BLACK_KEY_WIDTH : WHITE_KEY_WIDTH;
+
+      ctx.fillStyle = noteData.type === NoteType.black ? '#000' : '#fff';
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
+
       const noteHeight = Math.max(20, (note.duration || 1) * 30);
-      ctx.fillRect(x - 15, y, 30, noteHeight);
-      ctx.strokeRect(x - 15, y, 30, noteHeight);
+      ctx.fillRect(x - keyWidth / 2, y, keyWidth, noteHeight);
+      ctx.strokeRect(x - keyWidth / 2, y, keyWidth, noteHeight);
     });
 
     // finally draw piano keys on top of everything
+    drawPianoKeys(ctx, canvas.width);
+  };
+
+  // Redraw just the piano strip (used for key-flash updates). Avoids touching the falling-note area.
+  const redrawPianoStrip = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear only the piano region
+    ctx.clearRect(0, canvas.height - PIANO_HEIGHT, canvas.width, PIANO_HEIGHT);
+    // Repaint background strip
+    ctx.fillStyle = '#e0e0e0';
+    ctx.fillRect(0, canvas.height - PIANO_HEIGHT, canvas.width, PIANO_HEIGHT);
+    // Draw keys (with current highlight state)
     drawPianoKeys(ctx, canvas.width);
   };
 
@@ -144,9 +164,17 @@ const InteractivePianoCanvas: React.FC<Props> = ({
   useEffect(() => {
     const handle = setInterval(() => {
       const now = performance.now();
+      let needsRepaint = false;
       activeKeys.forEach((expiry, k) => {
-        if (expiry < now) activeKeys.delete(k);
+        if (expiry < now) {
+          activeKeys.delete(k);
+          needsRepaint = true;
+        }
       });
+      // Only touch the piano strip so falling notes keep their smooth trajectory
+      if (activeKeys.size || needsRepaint) {
+        redrawPianoStrip();
+      }
     }, 50);
     return () => clearInterval(handle);
   }, []);
