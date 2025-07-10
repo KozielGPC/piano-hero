@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Box, Typography, Card, CardContent, LinearProgress, Fade } from "@mui/material";
+import { Box } from "@mui/material";
 import { useNoteContext } from "../../context/NotesContext";
 import SongEditor from "../SongEditor";
 import { Menu } from "./components/Menu";
@@ -7,7 +7,7 @@ import { useGame } from "../../context/GameContext";
 import { EndGame } from "./components/EndGame";
 import { Pause } from "./components/Pause";
 import { Play } from "./components/Play";
-import { Speed } from "@mui/icons-material";
+import { Loading } from "./components/Loading";
 
 const GameController = () => {
 	const { score } = useNoteContext();
@@ -16,7 +16,6 @@ const GameController = () => {
 		gameState,
 		currentTime,
 		animationRef,
-		loadingMessage,
 		actions,
 		prevScoreRef,
 	} = useGame();
@@ -78,44 +77,9 @@ const GameController = () => {
 	// Convert current song notes to falling-note format for the canvas. We need the note key (e.g., "Q", "Qb")
 	// so that InteractivePianoCanvas can look it up in the global `notes` map.
 
-	const renderLoadingState = () => (
-		<Fade in={gameState === "LOADING"} timeout={300}>
-			<Card
-				elevation={8}
-				sx={{
-					background: "linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
-					backdropFilter: "blur(10px)",
-					border: "1px solid rgba(255,255,255,0.1)",
-					borderRadius: 3,
-					maxWidth: 400,
-					width: "100%",
-				}}
-			>
-				<CardContent sx={{ textAlign: "center", p: 4 }}>
-					<Speed sx={{ fontSize: 48, color: "#667eea", mb: 2 }} />
-					<Typography variant="h6" gutterBottom>
-						{loadingMessage || "Loading..."}
-					</Typography>
-					<LinearProgress
-						sx={{
-							mt: 2,
-							"& .MuiLinearProgress-bar": {
-								background: "linear-gradient(45deg, #667eea 30%, #764ba2 90%)",
-							},
-						}}
-					/>
-				</CardContent>
-			</Card>
-		</Fade>
-	);
-
 	const renderSongEditorState = () => (
 		<SongEditor onBack={() => actions.setGameState("MENU")} onPlaySong={actions.playEditorSong} />
 	);
-
-	useEffect(() => {
-		console.log("gameState", gameState);
-	}, [gameState]);
 
 	return (
 		<Box
@@ -143,7 +107,7 @@ const GameController = () => {
 			{gameState === "PLAYING" && <Play />}
 			{gameState === "PAUSED" && <Pause />}
 			{gameState === "ENDED" && <EndGame />}
-			{gameState === "LOADING" && renderLoadingState()}
+			{gameState === "LOADING" && <Loading />}
 			{gameState === "SONG_EDITOR" && renderSongEditorState()}
 		</Box>
 	);
