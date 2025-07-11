@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import RhythmEngine, { NoteEvent, Judgement } from "../../engine/RhythmEngine";
 import { useGame } from "../../context/GameContext";
 import { notes, NoteType } from "../../utils/constants";
 import {
@@ -28,7 +29,8 @@ interface Props {
 	height?: number;
 }
 
-const activeKeys: Map<string, number> = new Map();
+// Active key highlight state: stores expiry timestamp and visual info per key
+const activeKeys: Map<string, { expiry: number; color: string; label: string }> = new Map();
 
 const InteractivePianoCanvas: React.FC<Props> = ({
 	notes: songNotes,
@@ -42,35 +44,57 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 	const { actions } = useGame();
 	// Keep current time in a ref to avoid stale values inside event handlers
 	const currentTimeRef = useRef(currentTime);
+
+	// Build rhythm engine once per song change
+	const engineRef = useRef<RhythmEngine | null>(null);
+	useEffect(() => {
+		const noteEvents: NoteEvent[] = songNotes.map((n, idx) => ({
+			id: String(idx),
+			keys: [n.note],
+			start: n.time,
+		}));
+		engineRef.current = new RhythmEngine(noteEvents);
+		// reset hits tracking
+		hitNoteIndexesRef.current.clear();
+	}, [songNotes]);
 	useEffect(() => {
 		currentTimeRef.current = currentTime;
 	}, [currentTime]);
 	// Keep track of which notes were already evaluated to avoid double counting
 	const hitNoteIndexesRef = useRef<Set<number>>(new Set());
-	// Timing windows (in seconds) for scoring
-	const HIT_EARLY_WINDOW = 0.05; // allow up to 50 ms early
-	const HIT_LATE_WINDOW = 0.4; // allow up to 400 ms late – user perception matches when note visually reaches keys
+	// The RhythmEngine handles timing windows internally
 
-	// Determine whether the pressed key matches an upcoming note within the hit window
+	// Helper: map judgement to points & feedback style
+	const judgementInfo: Record<Judgement, { points: number; text: string; color: string }> = {
+		perfect: { points: 300, text: "Perfect!", color: "#ffd700" },
+		great: { points: 200, text: "Great!", color: "#4caf50" },
+		good: { points: 100, text: "Good", color: "#2196f3" },
+		hit: { points: 50, text: "Hit", color: "#9e9e9e" },
+		miss: { points: 0, text: "Miss", color: "#f44336" },
+		wrongKey: { points: 0, text: "Wrong Key", color: "#f44336" },
+	};
+
 	function evaluateNoteHit(keyLabel: string) {
-		let wasHit = false;
-		for (let i = 0; i < songNotes.length; i++) {
-			if (hitNoteIndexesRef.current.has(i)) continue; // already evaluated
-			const n = songNotes[i];
-			if (n.note !== keyLabel) continue;
-			const delta = currentTimeRef.current - n.time; // positive => late, negative => early
-			if (delta >= -HIT_EARLY_WINDOW && delta <= HIT_LATE_WINDOW) {
-				// Register a successful hit
-				hitNoteIndexesRef.current.add(i);
-				actions.incrementCorrect();
-				wasHit = true;
-				break;
-			}
-		}
-		if (!wasHit) {
-			// No matching note within window – count as wrong
+		if (!engineRef.current) return;
+		const verdict: Judgement = engineRef.current.handleKeyPress(keyLabel, currentTimeRef.current);
+
+		// Update score counts
+		if (verdict === "miss" || verdict === "wrongKey") {
 			actions.incrementWrong();
+		} else {
+			actions.incrementCorrect();
 		}
+
+		// Add points
+		const info = judgementInfo[verdict];
+		if (info.points > 0) actions.addPoints(info.points);
+
+		// Highlight this key with verdict color and label
+		activeKeys.set(keyLabel, {
+			expiry: performance.now() + KEY_HIGHLIGHT_MS,
+			color: info.color,
+			label: info.text,
+		});
 	}
 
 	// Audio helper
@@ -86,7 +110,11 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 		}
 		audio.currentTime = 0;
 		audio.play().catch(() => {});
-		activeKeys.set(keyLabel, performance.now() + KEY_HIGHLIGHT_MS);
+		activeKeys.set(keyLabel, {
+			expiry: performance.now() + KEY_HIGHLIGHT_MS,
+			color: "#ffeb3b", // Default highlight color
+			label: "", // No label for audio play
+		});
 
 		// Evaluate if this key press was a hit or miss
 		evaluateNoteHit(keyLabel);
@@ -100,8 +128,9 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 			const noteData = value as (typeof notes)[keyof typeof notes];
 			if (noteData.type !== NoteType.white) return;
 			const x = getKeyCenterX(noteData.offset, canvasWidth / 2);
-			const isActive = activeKeys.has(key) && activeKeys.get(key)! > performance.now();
-			ctx.fillStyle = isActive ? "#ffeb3b" : "#fff";
+			const keyState = activeKeys.get(key);
+			const isActive = keyState && keyState.expiry > performance.now();
+			ctx.fillStyle = isActive ? keyState!.color : "#fff";
 			ctx.strokeStyle = "#000";
 			ctx.lineWidth = 1;
 			ctx.fillRect(x - WHITE_KEY_WIDTH / 2, height - PIANO_HEIGHT, WHITE_KEY_WIDTH, PIANO_HEIGHT);
@@ -118,8 +147,9 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 			const noteData = value as (typeof notes)[keyof typeof notes];
 			if (noteData.type !== NoteType.black) return;
 			const x = getKeyCenterX(noteData.offset, canvasWidth / 2);
-			const isActive = activeKeys.has(key) && activeKeys.get(key)! > performance.now();
-			ctx.fillStyle = isActive ? "#ffeb3b" : "#000";
+			const keyState = activeKeys.get(key);
+			const isActive = keyState && keyState.expiry > performance.now();
+			ctx.fillStyle = isActive ? keyState!.color : "#000";
 			const blackH = PIANO_HEIGHT * 0.6;
 			ctx.fillRect(x - BLACK_KEY_WIDTH / 2, height - PIANO_HEIGHT, BLACK_KEY_WIDTH, blackH);
 			ctx.fillStyle = "#fff";
@@ -166,6 +196,16 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 			const noteHeight = Math.max(20, (note.duration || 1) * 30);
 			ctx.fillRect(x - keyWidth / 2, y, keyWidth, noteHeight);
 			ctx.strokeRect(x - keyWidth / 2, y, keyWidth, noteHeight);
+
+			// Draw feedback label above active key
+			const keyState = activeKeys.get(note.note);
+			if (keyState && keyState.expiry > performance.now()) {
+				ctx.fillStyle = keyState.color;
+				ctx.font = "12px Arial";
+				ctx.textAlign = "center";
+				const labelY = height - PIANO_HEIGHT - 8; // just above white key top
+				ctx.fillText(keyState.label, x, labelY);
+			}
 		});
 
 		// finally draw piano keys on top of everything
@@ -198,8 +238,8 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 		const handle = setInterval(() => {
 			const now = performance.now();
 			let needsRepaint = false;
-			activeKeys.forEach((expiry, k) => {
-				if (expiry < now) {
+			activeKeys.forEach((state, k) => {
+				if (state.expiry < now) {
 					activeKeys.delete(k);
 					needsRepaint = true;
 				}

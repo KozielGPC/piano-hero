@@ -42,6 +42,7 @@ interface GameContextValue {
 		setGameState: React.Dispatch<React.SetStateAction<GameState>>;
 		incrementCorrect: () => void;
 		incrementWrong: () => void;
+		addPoints: (amount: number) => void;
 	};
 }
 
@@ -66,10 +67,11 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 	const [score, setScore] = useState<IScore>({
 		correctNotes: 0,
 		wrongNotes: 0,
+		points: 0,
 	});
 
 	const resetScore = () => {
-		setScore({ correctNotes: 0, wrongNotes: 0 });
+		setScore({ correctNotes: 0, wrongNotes: 0, points: 0 });
 	};
 
 	const allSongs = getAllSongs();
@@ -125,7 +127,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 		setMaxCombo(0);
 		setAccuracy(0);
 		prevScoreRef.current = null;
-		setScore({ correctNotes: 0, wrongNotes: 0 });
+		setScore({ correctNotes: 0, wrongNotes: 0, points: 0 });
 		setCurrentTime(0);
 
 		setCurrentSong(selectedSong.notes);
@@ -143,7 +145,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 		setMaxCombo(0);
 		setAccuracy(0);
 		prevScoreRef.current = null;
-		setScore({ correctNotes: 0, wrongNotes: 0 });
+		setScore({ correctNotes: 0, wrongNotes: 0, points: 0 });
 	}, [setCurrentSong]);
 
 	const playEditorSong = useCallback(
@@ -194,6 +196,8 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 				setScore((prev) => ({ ...prev, correctNotes: prev.correctNotes + 1 })),
 			incrementWrong: () =>
 				setScore((prev) => ({ ...prev, wrongNotes: prev.wrongNotes + 1 })),
+			addPoints: (amount: number) =>
+				setScore((prev) => ({ ...prev, points: prev.points + amount })),
 		},
 	};
 

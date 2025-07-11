@@ -8,6 +8,7 @@ export interface IActiveNote {
 export interface IScore {
 	correctNotes: number;
 	wrongNotes: number;
+	points: number;
 }
 
 export interface INotes {

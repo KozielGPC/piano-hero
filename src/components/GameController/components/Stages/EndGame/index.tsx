@@ -32,7 +32,7 @@ export const EndGame = () => {
 						<Box display="flex" justifyContent="space-between" alignItems="center">
 							<Typography variant="h6">Final Score:</Typography>
 							<Typography variant="h6" color="primary.main" fontWeight="bold">
-								{score && typeof score === "object" ? score.correctNotes * 10 : 0}
+								{score && typeof score === "object" ? score.points : 0}
 							</Typography>
 						</Box>
 

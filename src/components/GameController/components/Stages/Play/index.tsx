@@ -65,7 +65,7 @@ export const Play = () => {
 								/>
 								<Chip
 									icon={<EmojiEvents />}
-									label={`Score: ${score && typeof score === "object" ? score.correctNotes * 10 : 0}`}
+									label={`Score: ${score && typeof score === "object" ? score.points : 0}`}
 									color="primary"
 									variant="filled"
 								/>
