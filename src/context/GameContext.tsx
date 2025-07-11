@@ -40,6 +40,8 @@ interface GameContextValue {
 		setImportSuccess: React.Dispatch<React.SetStateAction<string>>;
 		setError: React.Dispatch<React.SetStateAction<string>>;
 		setGameState: React.Dispatch<React.SetStateAction<GameState>>;
+		incrementCorrect: () => void;
+		incrementWrong: () => void;
 	};
 }
 
@@ -188,6 +190,10 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 			setImportSuccess,
 			setError,
 			setGameState,
+			incrementCorrect: () =>
+				setScore((prev) => ({ ...prev, correctNotes: prev.correctNotes + 1 })),
+			incrementWrong: () =>
+				setScore((prev) => ({ ...prev, wrongNotes: prev.wrongNotes + 1 })),
 		},
 	};
 

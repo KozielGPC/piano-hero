@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import { useGame } from "../../context/GameContext";
 import { notes, NoteType } from "../../utils/constants";
 import {
 	CANVAS_HEIGHT_DEFAULT,
@@ -38,6 +39,39 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 	height = CANVAS_HEIGHT_DEFAULT,
 }) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const { actions } = useGame();
+	// Keep current time in a ref to avoid stale values inside event handlers
+	const currentTimeRef = useRef(currentTime);
+	useEffect(() => {
+		currentTimeRef.current = currentTime;
+	}, [currentTime]);
+	// Keep track of which notes were already evaluated to avoid double counting
+	const hitNoteIndexesRef = useRef<Set<number>>(new Set());
+	// Timing windows (in seconds) for scoring
+	const HIT_EARLY_WINDOW = 0.05; // allow up to 50 ms early
+	const HIT_LATE_WINDOW = 0.4; // allow up to 400 ms late – user perception matches when note visually reaches keys
+
+	// Determine whether the pressed key matches an upcoming note within the hit window
+	function evaluateNoteHit(keyLabel: string) {
+		let wasHit = false;
+		for (let i = 0; i < songNotes.length; i++) {
+			if (hitNoteIndexesRef.current.has(i)) continue; // already evaluated
+			const n = songNotes[i];
+			if (n.note !== keyLabel) continue;
+			const delta = currentTimeRef.current - n.time; // positive => late, negative => early
+			if (delta >= -HIT_EARLY_WINDOW && delta <= HIT_LATE_WINDOW) {
+				// Register a successful hit
+				hitNoteIndexesRef.current.add(i);
+				actions.incrementCorrect();
+				wasHit = true;
+				break;
+			}
+		}
+		if (!wasHit) {
+			// No matching note within window – count as wrong
+			actions.incrementWrong();
+		}
+	}
 
 	// Audio helper
 	const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
@@ -53,6 +87,9 @@ const InteractivePianoCanvas: React.FC<Props> = ({
 		audio.currentTime = 0;
 		audio.play().catch(() => {});
 		activeKeys.set(keyLabel, performance.now() + KEY_HIGHLIGHT_MS);
+
+		// Evaluate if this key press was a hit or miss
+		evaluateNoteHit(keyLabel);
 		// No immediate full redraw – the highlight timer will pick it up, avoiding note flash
 	};
 
