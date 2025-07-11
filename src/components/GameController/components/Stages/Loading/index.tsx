@@ -1,6 +1,6 @@
 import { Card, CardContent, Fade, Typography, LinearProgress } from "@mui/material";
 import { Speed } from "@mui/icons-material";
-import { useGame } from "../../../../context/GameContext";
+import { useGame } from "../../../../../context/GameContext";
 
 export const Loading = () => {
     const { gameState, loadingMessage } = useGame();

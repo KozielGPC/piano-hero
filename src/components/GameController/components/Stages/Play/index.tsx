@@ -3,15 +3,14 @@ import { Card, CardContent, Stack, Typography, Chip, IconButton } from "@mui/mat
 import { Slide } from "@mui/material";
 
 import { Box } from "@mui/material";
-import { useGame } from "../../../../context/GameContext";
-import { useNoteContext } from "../../../../context/NotesContext";
-import InteractivePianoCanvas, { IFallingNote } from "../../../PianoCanvas";
+import { useGame } from "../../../../../context/GameContext";
+import InteractivePianoCanvas, { IFallingNote } from "../../../../PianoCanvas";
 import { CheckCircle, Cancel, EmojiEvents, Star, Pause as PauseIcon, Stop } from "@mui/icons-material";
-import { notes } from "../../../../utils/constants";
+import { notes } from "../../../../../utils/constants";
 
 export const Play = () => {
-	const { gameState, actions, combo, maxCombo, selectedSongId, allSongs, currentTime } = useGame();
-	const { score, currentSong } = useNoteContext();
+	const { gameState, actions, combo, maxCombo, selectedSongId, allSongs, currentTime, score, currentSong } =
+		useGame();
 
 	const fallingNotes: IFallingNote[] = (currentSong || []).map((n) => {
 		// Find the constant-key (e.g., "Q", "Qb", "Z") whose `note` char matches the saved value
@@ -27,7 +26,6 @@ export const Play = () => {
 		} as IFallingNote;
 	});
 
-    
 	return (
 		<Box sx={{ width: "100%", maxWidth: "1200px" }}>
 			{/* Game Header with Controls */}

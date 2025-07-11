@@ -1,5 +1,4 @@
 import { Container, CssBaseline } from "@mui/material";
-import { NoteProvider } from "./context/NotesContext";
 import GameController from "./components/GameController";
 import { GameArea } from "./components/GameArea";
 import { Header } from "./components/Header";
@@ -22,15 +21,13 @@ export const Home = () => {
 				maxWidth={false}
 				disableGutters
 			>
-				<NoteProvider>
-					<Header />
+				<Header />
 
-					<GameArea>
-						<GameProvider>
-							<GameController />
-						</GameProvider>
-					</GameArea>
-				</NoteProvider>
+				<GameArea>
+					<GameProvider>
+						<GameController />
+					</GameProvider>
+				</GameArea>
 			</Container>
 		</>
 	);

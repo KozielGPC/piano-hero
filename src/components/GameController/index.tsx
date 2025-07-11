@@ -1,24 +1,15 @@
 import { useEffect } from "react";
 import { Box } from "@mui/material";
-import { useNoteContext } from "../../context/NotesContext";
 import SongEditor from "../SongEditor";
-import { Menu } from "./components/Menu";
+import { Menu } from "./components/Stages/Menu";
 import { useGame } from "../../context/GameContext";
-import { EndGame } from "./components/EndGame";
-import { Pause } from "./components/Pause";
-import { Play } from "./components/Play";
-import { Loading } from "./components/Loading";
+import { EndGame } from "./components/Stages/EndGame";
+import { Pause } from "./components/Stages/Pause";
+import { Play } from "./components/Stages/Play";
+import { Loading } from "./components/Stages/Loading";
 
 const GameController = () => {
-	const { score } = useNoteContext();
-
-	const {
-		gameState,
-		currentTime,
-		animationRef,
-		actions,
-		prevScoreRef,
-	} = useGame();
+	const { gameState, currentTime, animationRef, actions, prevScoreRef, score } = useGame();
 
 	// Update game stats when score changes
 	useEffect(() => {

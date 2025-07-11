@@ -2,7 +2,7 @@ import { Card, CardContent, Fade, Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Button } from "@mui/material";
 import { PlayArrow } from "@mui/icons-material";
-import { useGame } from "../../../../context/GameContext";
+import { useGame } from "../../../../../context/GameContext";
 import { Pause as PauseIcon } from "@mui/icons-material";
 import { Stop } from "@mui/icons-material";
 

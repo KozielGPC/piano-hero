@@ -6,7 +6,7 @@ import { Box } from "@mui/material";
 import { Upload } from "@mui/icons-material";
 import { PlayArrow } from "@mui/icons-material";
 import { Edit } from "@mui/icons-material";
-import { useGame } from "../../../../context/GameContext";
+import { useGame } from "../../../../../context/GameContext";
 
 export const Menu = () => {
 	const { selectedSongId, allSongs, isLoading, importError, importSuccess, error, actions } = useGame();
