@@ -380,7 +380,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
         <IconButton onClick={onBack} sx={{ mr: 2 }}>
           <ArrowBack />
         </IconButton>
-        <Typography variant="h4" component="h1">
+        <Typography variant="h4" component="h1" sx={{ color: "#FF8E53" }}>
           Song Editor
         </Typography>
       </Box>

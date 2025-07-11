@@ -14,7 +14,7 @@ export const notes = {
 	},
 	Q: { offset: -14, note: "q", type: NoteType.white, fileName: "C4.mp3" },
 	Wb: {
-		offset: -9,
+		offset: -11,
 		note: "3",
 		type: NoteType.black,
 		fileName: "Eb4.mp3",
@@ -22,21 +22,21 @@ export const notes = {
 	W: { offset: -12, note: "w", type: NoteType.white, fileName: "D4.mp3" },
 	E: { offset: -10, note: "e", type: NoteType.white, fileName: "E4.mp3" },
 	Rb: {
-		offset: -5,
+		offset: -7,
 		note: "4",
 		type: NoteType.black,
 		fileName: "Gb4.mp3",
 	},
 	R: { offset: -8, note: "r", type: NoteType.white, fileName: "F4.mp3" },
 	Tb: {
-		offset: -3,
+		offset: -5,
 		note: "5",
 		type: NoteType.black,
 		fileName: "Ab4.mp3",
 	},
 	T: { offset: -6, note: "t", type: NoteType.white, fileName: "G4.mp3" },
 	Ub: {
-		offset: -1,
+		offset: -3,
 		note: "6",
 		type: NoteType.black,
 		fileName: "Bb4.mp3",
@@ -47,14 +47,14 @@ export const notes = {
 
 
 	S: {
-		offset: 5,
+		offset: 1,
 		note: "s",
 		type: NoteType.black,
 		fileName: "Db5.mp3",
 	},
 	Z: { offset: 0, note: "z", type: NoteType.white, fileName: "C5.mp3" },
 	D: {
-		offset: 7,
+		offset: 3,
 		note: "d",
 		type: NoteType.black,
 		fileName: "Eb5.mp3",
@@ -62,21 +62,21 @@ export const notes = {
 	X: { offset: 2, note: "x", type: NoteType.white, fileName: "D5.mp3" },
 	C: { offset: 4, note: "c", type: NoteType.white, fileName: "E5.mp3" },
 	G: {
-		offset: 11.5,
+		offset: 7,
 		note: "g",
 		type: NoteType.black,
 		fileName: "Gb5.mp3",
 	},
 	V: { offset: 6, note: "v", type: NoteType.white, fileName: "F5.mp3" },
 	H: {
-		offset: 13,
+		offset: 9,
 		note: "h",
 		type: NoteType.black,
 		fileName: "Ab5.mp3",
 	},
 	B: { offset: 8, note: "b", type: NoteType.white, fileName: "G5.mp3" },
 	J: {
-		offset: 15,
+		offset: 11,
 		note: "j",
 		type: NoteType.black,
 		fileName: "Bb5.mp3",
