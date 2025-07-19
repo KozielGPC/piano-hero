@@ -4,7 +4,7 @@ import { getAllSongs, addUploadedSong, importSongFromJSON } from "../utils/songL
 
 type GameState = "MENU" | "PLAYING" | "PAUSED" | "ENDED" | "LOADING" | "SONG_EDITOR";
 
-interface GameContextValue {
+export interface GameContextValue {
 	gameState: GameState;
 	selectedSongId: string;
 	accuracy: number;
