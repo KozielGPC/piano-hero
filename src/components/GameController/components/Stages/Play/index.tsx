@@ -28,7 +28,6 @@ export const Play = () => {
 
 	return (
 		<Box sx={{ width: "100%", maxWidth: "1200px" }}>
-			{/* Game Header with Controls */}
 			<Slide direction="down" in={gameState === "PLAYING"} timeout={500}>
 				<Card
 					elevation={4}
@@ -104,10 +103,8 @@ export const Play = () => {
 				</Card>
 			</Slide>
 
-			{/* Game Area */}
 			<Slide direction="up" in={gameState === "PLAYING"} timeout={700}>
 				<Box>
-					{/* Combined falling notes + piano canvas */}
 					<Box sx={{ mb: 2 }}>
 						<InteractivePianoCanvas
 							notes={fallingNotes}

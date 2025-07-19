@@ -43,6 +43,8 @@ interface GameContextValue {
 		incrementCorrect: () => void;
 		incrementWrong: () => void;
 		addPoints: (amount: number) => void;
+		updateAccuracy: (score: IScore) => void;
+		handleComboLogic: (score: IScore, prevScore?: Omit<IScore, "points"> | null) => void;
 	};
 }
 
@@ -156,6 +158,33 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 		[setCurrentSong],
 	);
 
+	const updateAccuracy = (score: IScore) => {
+		const totalNotes = score.correctNotes + score.wrongNotes;
+		const calculatedAccuracy = totalNotes > 0 ? (score.correctNotes / totalNotes) * 100 : 0;
+		setAccuracy(calculatedAccuracy);
+	};
+
+	const handleComboLogic = (score: IScore, prevScore?: Omit<IScore, "points"> | null) => {
+		if (prevScore) {
+			if (score.wrongNotes > prevScore.wrongNotes) {
+				setCombo(0);
+			}
+			else if (score.correctNotes > prevScore.correctNotes) {
+				setCombo((prevCombo) => {	
+					const newCombo = prevCombo + 1;
+					setMaxCombo((prevMax) => Math.max(prevMax, newCombo));
+					return newCombo;
+				});
+			}
+		} else {
+			// First score update, initialize combo
+			if (score.correctNotes > 0) {
+				setCombo(score.correctNotes);
+				setMaxCombo(score.correctNotes);
+			}
+		}
+	};
+
 	const contextValue: GameContextValue = {
 		gameState,
 		selectedSongId,
@@ -198,6 +227,8 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 				setScore((prev) => ({ ...prev, wrongNotes: prev.wrongNotes + 1 })),
 			addPoints: (amount: number) =>
 				setScore((prev) => ({ ...prev, points: prev.points + amount })),
+			updateAccuracy,
+			handleComboLogic,
 		},
 	};
 

@@ -35,7 +35,6 @@ export const Menu = () => {
 				Choose Your Challenge
 			</Typography>
 
-			{/* Error and Success Messages */}
 			{error && (
 				<Alert
 					severity="error"
@@ -66,7 +65,6 @@ export const Menu = () => {
 				</Alert>
 			)}
 
-			{/* Song Selection */}
 			<Card
 				elevation={6}
 				sx={{
@@ -92,7 +90,6 @@ export const Menu = () => {
 					))}
 				</Select>
 
-				{/* JSON Import */}
 				<Box sx={{ mt: 2, mb: 2 }}>
 					<Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
 						Or import a custom song:
@@ -137,7 +134,6 @@ export const Menu = () => {
 				</Button>
 			</Card>
 
-			{/* Song Editor Button */}
 			<Button
 				variant="outlined"
 				size="large"
@@ -158,7 +154,6 @@ export const Menu = () => {
 				Song Editor
 			</Button>
 
-			{/* Instructions */}
 			<Typography variant="body1" sx={{ marginTop: "1rem", color: "#666", maxWidth: "600px" }}>
 				Use your keyboard to play the falling notes! Match the timing and build your combo for a higher score.
 			</Typography>

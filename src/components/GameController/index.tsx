@@ -11,42 +11,17 @@ import { Loading } from "./components/Stages/Loading";
 const GameController = () => {
 	const { gameState, currentTime, animationRef, actions, prevScoreRef, score } = useGame();
 
-	// Update game stats when score changes
 	useEffect(() => {
 		if (score && typeof score === "object") {
-			// Calculate accuracy based on score
-			const totalNotes = score.correctNotes + score.wrongNotes;
-			const calculatedAccuracy = totalNotes > 0 ? (score.correctNotes / totalNotes) * 100 : 0;
-			actions.setAccuracy(calculatedAccuracy);
+			actions.updateAccuracy(score);
 
-			// Handle combo logic
 			const prevScore = prevScoreRef.current;
-			if (prevScore) {
-				// Check if wrong notes increased (combo breaker)
-				if (score.wrongNotes > prevScore.wrongNotes) {
-					actions.setCombo(0);
-				}
-				// Check if correct notes increased (combo increment)
-				else if (score.correctNotes > prevScore.correctNotes) {
-					actions.setCombo((prevCombo) => {
-						const newCombo = prevCombo + 1;
-						// Update max combo if current combo is higher
-						actions.setMaxCombo((prevMax) => Math.max(prevMax, newCombo));
-						return newCombo;
-					});
-				}
-			} else {
-				// First score update, initialize combo
-				if (score.correctNotes > 0) {
-					actions.setCombo(score.correctNotes);
-					actions.setMaxCombo(score.correctNotes);
-				}
-			}
+			actions.handleComboLogic(score, prevScore);
 
 			// Update previous score reference
 			prevScoreRef.current = { correctNotes: score.correctNotes, wrongNotes: score.wrongNotes };
 		}
-	}, [score]);
+	}, [score, prevScoreRef, actions]);
 
 	// Drive time progression while playing
 	useEffect(() => {
@@ -63,10 +38,7 @@ const GameController = () => {
 		return () => {
 			if (animationRef.current) cancelAnimationFrame(animationRef.current);
 		};
-	}, [gameState]);
-
-	// Convert current song notes to falling-note format for the canvas. We need the note key (e.g., "Q", "Qb")
-	// so that InteractivePianoCanvas can look it up in the global `notes` map.
+	}, [gameState, currentTime, actions, animationRef]);
 
 	const renderSongEditorState = () => (
 		<SongEditor onBack={() => actions.setGameState("MENU")} onPlaySong={actions.playEditorSong} />
