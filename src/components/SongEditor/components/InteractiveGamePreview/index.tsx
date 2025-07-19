@@ -1,0 +1,52 @@
+import { Card, CardContent, Paper, Typography } from "@mui/material";
+import { InteractivePianoCanvas } from "../../../PianoCanvas";
+import { IFallingNote } from "../../../PianoCanvas/types";
+
+const CANVAS_HEIGHT = 400;
+
+interface InteractiveGamePreviewProps {
+	fallingNotes: IFallingNote[];
+	currentTime: number;
+	selectedNotes: string[];
+	addNote: () => void;
+}
+export const InteractiveGamePreview = ({
+	fallingNotes,
+	currentTime,
+	selectedNotes,
+	addNote,
+}: InteractiveGamePreviewProps) => {
+	return (
+		<Card elevation={3} sx={{ mb: 3 }}>
+			<CardContent>
+				<Typography variant="h6" gutterBottom>
+					Interactive Game Preview - Click to Add Notes
+				</Typography>
+				<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+					This preview shows how notes will appear in the actual game. Click on the falling notes area or use
+					the Add button to place notes.
+				</Typography>
+
+				<Paper
+					elevation={2}
+					sx={{
+						mb: 2,
+						position: "relative",
+						border: "1px solid #ddd",
+						borderRadius: 1,
+						overflow: "hidden",
+					}}
+				>
+					<InteractivePianoCanvas
+						notes={fallingNotes}
+						currentTime={currentTime}
+						selectedNotes={selectedNotes}
+						onAddNote={() => addNote()}
+						width={800}
+						height={CANVAS_HEIGHT}
+					/>
+				</Paper>
+			</CardContent>
+		</Card>
+	);
+};
