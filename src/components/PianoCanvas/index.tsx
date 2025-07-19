@@ -46,17 +46,16 @@ export const InteractivePianoCanvas = ({
 		// reset hits tracking
 		hitNoteIndexesRef.current.clear();
 	}, [songNotes]);
+
 	useEffect(() => {
 		currentTimeRef.current = currentTime;
 	}, [currentTime]);
 
-	// Audio helper
 	const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
 
-	// Redraw whenever props change (currentTime, songNotes length, highlights)
 	useEffect(() => {
 		drawCanvas(canvasRef.current, songNotes, currentTime, height, activeKeys);
-	});
+	}, [songNotes, currentTime, height, canvasRef]);
 
 	// Cleanup expired active keys
 	useEffect(() => {
@@ -75,9 +74,8 @@ export const InteractivePianoCanvas = ({
 			}
 		}, 50);
 		return () => clearInterval(handle);
-	}, []);
+	}, [height]);
 
-	// Keydown listener
 	useEffect(() => {
 		const down = (e: KeyboardEvent) => {
 			const char = e.key.toLowerCase();
@@ -98,7 +96,6 @@ export const InteractivePianoCanvas = ({
 		return () => window.removeEventListener("keydown", down);
 	}, [actions]);
 
-	// Click handler
 	const onCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		const rect = e.currentTarget.getBoundingClientRect();
 		const x = e.clientX - rect.left;
@@ -106,7 +103,6 @@ export const InteractivePianoCanvas = ({
 		if (y < height - PIANO_HEIGHT) {
 			if (selectedNotes.length && onAddNote) onAddNote();
 		} else {
-			// play key
 			let nearest: string | null = null;
 			let min = Infinity;
 			Object.keys(notes).forEach((k) => {
