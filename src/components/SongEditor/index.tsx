@@ -17,7 +17,7 @@ import { useSongExport } from "../../hooks/useSongExport";
 
 interface SongEditorProps {
 	onBack: () => void;
-	onPlaySong: (songData: INotes[]) => void;
+	onPlaySong: (songData: INotes[], audioUrl?: string) => void;
 }
 
 const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {

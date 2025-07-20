@@ -1,16 +1,27 @@
 import { Card, CardContent, Typography, Stack, Button } from "@mui/material";
 import { GetApp, PlayArrow } from "@mui/icons-material";
+import { useState } from "react";
 import { SongData } from "../../types";
 import { INotes } from "../../../../utils/interfaces";
 
 interface ExportControlsProps {
 	songData: SongData;
-	exportSong: (songData: SongData) => void;
-	playSong: (songData: SongData, onPlaySong: (gameNotes: INotes[]) => void) => void;
-	onPlaySong: (gameNotes: INotes[]) => void;
+	exportSong: (songData: SongData) => Promise<void>;
+	playSong: (songData: SongData, onPlaySong: (gameNotes: INotes[], audioUrl?: string) => void) => void;
+	onPlaySong: (gameNotes: INotes[], audioUrl?: string) => void;
 }
 
 export const ExportControls = ({ songData, exportSong, playSong, onPlaySong }: ExportControlsProps) => {
+	const [isExporting, setIsExporting] = useState(false);
+
+	const handleExport = async () => {
+		setIsExporting(true);
+		try {
+			await exportSong(songData);
+		} finally {
+			setIsExporting(false);
+		}
+	};
 	return (
 		<Card elevation={3}>
 			<CardContent>
@@ -21,10 +32,10 @@ export const ExportControls = ({ songData, exportSong, playSong, onPlaySong }: E
 					<Button
 						variant="contained"
 						startIcon={<GetApp />}
-						onClick={() => exportSong(songData)}
-						disabled={!songData.name.trim() || songData.notes.length === 0}
+						onClick={handleExport}
+						disabled={!songData.name.trim() || songData.notes.length === 0 || !songData.audioFile || isExporting}
 					>
-						Export Song Data
+						{isExporting ? 'Exporting...' : 'Export Song with Audio'}
 					</Button>
 					<Button
 						variant="contained"

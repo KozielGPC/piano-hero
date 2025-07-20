@@ -8,10 +8,10 @@ interface UseSongExportProps {
 }
 
 interface UseSongExportReturn {
-	exportSong: (songData: SongData) => void;
+	exportSong: (songData: SongData) => Promise<void>;
 	validateSongForExport: (songData: SongData) => { isValid: boolean; error?: string };
 	convertEditorNotesToGameFormat: (editorNotes: EditorNote[]) => INotes[];
-	playSong: (songData: SongData, onPlaySong: (gameNotes: INotes[]) => void) => void;
+	playSong: (songData: SongData, onPlaySong: (gameNotes: INotes[], audioUrl?: string) => void) => void;
 }
 
 export const useSongExport = ({ onError, onSuccess }: UseSongExportProps): UseSongExportReturn => {
@@ -22,6 +22,10 @@ export const useSongExport = ({ onError, onSuccess }: UseSongExportProps): UseSo
 
 		if (songData.notes.length === 0) {
 			return { isValid: false, error: "Please add at least one note" };
+		}
+
+		if (!songData.audioFile) {
+			return { isValid: false, error: "Please upload an audio file to export" };
 		}
 
 		return { isValid: true };
@@ -59,7 +63,22 @@ export const useSongExport = ({ onError, onSuccess }: UseSongExportProps): UseSo
 		URL.revokeObjectURL(url);
 	};
 
-	const exportSong = (songData: SongData) => {
+	const convertAudioToBase64 = (audioFile: File): Promise<string> => {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = () => {
+				if (typeof reader.result === 'string') {
+					resolve(reader.result);
+				} else {
+					reject(new Error('Failed to convert audio to base64'));
+				}
+			};
+			reader.onerror = () => reject(new Error('Failed to read audio file'));
+			reader.readAsDataURL(audioFile);
+		});
+	};
+
+	const exportSong = async (songData: SongData) => {
 		const validation = validateSongForExport(songData);
 
 		if (!validation.isValid) {
@@ -69,32 +88,44 @@ export const useSongExport = ({ onError, onSuccess }: UseSongExportProps): UseSo
 
 		try {
 			const exportNotes = convertEditorNotesToGameFormat(songData.notes);
+			
+			// Convert audio file to base64
+			const audioBase64 = await convertAudioToBase64(songData.audioFile!);
 
 			const exportData = {
 				name: songData.name,
 				artist: songData.artist,
 				notes: exportNotes,
+				audioUrl: audioBase64,
+				audioDuration: songData.duration,
+				audioFileName: songData.audioFile!.name,
+				audioType: songData.audioFile!.type,
 			};
 
 			downloadJsonFile(exportData, songData.name);
-			onSuccess("Song exported successfully!");
+			onSuccess("Song with audio exported successfully!");
 		} catch (error) {
 			console.error("Error exporting song:", error);
 			onError("Failed to export song. Please try again.");
 		}
 	};
 
-	const playSong = (songData: SongData, onPlaySong: (gameNotes: INotes[]) => void) => {
-		const validation = validateSongForExport(songData);
+	const playSong = (songData: SongData, onPlaySong: (gameNotes: INotes[], audioUrl?: string) => void) => {
+		// For play, we only need basic validation (not requiring audio file)
+		if (!songData.name.trim()) {
+			onError("Please enter a song name");
+			return;
+		}
 
-		if (!validation.isValid) {
-			onError(validation.error!);
+		if (songData.notes.length === 0) {
+			onError("Please add at least one note");
 			return;
 		}
 
 		try {
 			const gameNotes = convertEditorNotesToGameFormat(songData.notes);
-			onPlaySong(gameNotes);
+			const audioUrl = songData.audioFile ? URL.createObjectURL(songData.audioFile) : undefined;
+			onPlaySong(gameNotes, audioUrl);
 		} catch (error) {
 			console.error("Error preparing song for play:", error);
 			onError("Failed to prepare song for play. Please try again.");

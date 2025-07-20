@@ -20,6 +20,7 @@ export interface GameContextValue {
 	prevScoreRef: React.MutableRefObject<{ correctNotes: number; wrongNotes: number } | null>;
 	allSongs: ReturnType<typeof getAllSongs>;
 	currentSong: INotes[] | null;
+	currentSongAudioUrl: string | null;
 	score: IScore;
 	actions: {
 		resetScore: () => void;
@@ -30,7 +31,7 @@ export interface GameContextValue {
 		resumeGame: () => void;
 		stopGame: () => void;
 		returnToMenu: () => void;
-		playEditorSong: (songNotes: INotes[]) => void;
+		playEditorSong: (songNotes: INotes[], audioUrl?: string) => void;
 		setAccuracy: React.Dispatch<React.SetStateAction<number>>;
 		setCombo: React.Dispatch<React.SetStateAction<number>>;
 		setMaxCombo: React.Dispatch<React.SetStateAction<number>>;
@@ -65,6 +66,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 	const [error, setError] = useState<string>("");
 	const prevScoreRef = useRef<{ correctNotes: number; wrongNotes: number } | null>(null);
 	const [currentSong, setCurrentSong] = useState<INotes[] | null>(null);
+	const [currentSongAudioUrl, setCurrentSongAudioUrl] = useState<string | null>(null);
 
 	const [score, setScore] = useState<IScore>({
 		correctNotes: 0,
@@ -133,6 +135,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 		setCurrentTime(0);
 
 		setCurrentSong(selectedSong.notes);
+		setCurrentSongAudioUrl(selectedSong.audioUrl || null);
 		setGameState("PLAYING");
 	}, [selectedSongId, allSongs, setCurrentSong]);
 
@@ -143,6 +146,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 	const returnToMenu = useCallback(() => {
 		setGameState("MENU");
 		setCurrentSong(null);
+		setCurrentSongAudioUrl(null);
 		setCombo(0);
 		setMaxCombo(0);
 		setAccuracy(0);
@@ -151,8 +155,9 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 	}, [setCurrentSong]);
 
 	const playEditorSong = useCallback(
-		(songNotes: INotes[]) => {
+		(songNotes: INotes[], audioUrl?: string) => {
 			setCurrentSong(songNotes);
+			setCurrentSongAudioUrl(audioUrl || null);
 			setGameState("PLAYING");
 		},
 		[setCurrentSong],
@@ -201,6 +206,7 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 		prevScoreRef,
 		allSongs,
 		currentSong,
+		currentSongAudioUrl,
 		score,
 		actions: {
 			resetScore,

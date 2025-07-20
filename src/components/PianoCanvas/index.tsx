@@ -13,6 +13,7 @@ interface IProps {
 	onAddNote?: () => void;
 	width?: number;
 	height?: number;
+	hasBackgroundAudio?: boolean; // Whether background song audio is playing
 }
 
 const activeKeys: ActiveKeys = new Map();
@@ -24,6 +25,7 @@ export const InteractivePianoCanvas = ({
 	onAddNote,
 	width = 800,
 	height = CANVAS_HEIGHT_DEFAULT,
+	hasBackgroundAudio = false,
 }: IProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const { actions } = useGame();
@@ -90,6 +92,7 @@ export const InteractivePianoCanvas = ({
 					actions.incrementCorrect,
 					actions.addPoints,
 					audioCache,
+					hasBackgroundAudio,
 				);
 		};
 		window.addEventListener("keydown", down);
@@ -123,6 +126,7 @@ export const InteractivePianoCanvas = ({
 					actions.incrementCorrect,
 					actions.addPoints,
 					audioCache,
+					hasBackgroundAudio,
 				);
 		}
 	};

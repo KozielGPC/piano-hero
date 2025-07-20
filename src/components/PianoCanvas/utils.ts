@@ -20,7 +20,6 @@ import {
 	BLACK_KEY_FONT,
 	KEY_STROKE_COLOR,
 	KEY_STROKE_WIDTH,
-	DEFAULT_AUDIO_HIGHLIGHT_COLOR,
 	FEEDBACK_LABEL_FONT,
 	CANVAS_BACKGROUND_COLOR,
 	PIANO_STRIP_COLOR,
@@ -250,7 +249,7 @@ export const evaluateNoteHit = (
 };
 
 /**
- * Plays the audio for a pressed key and evaluates if it was a correct hit
+ * Evaluates a key press and plays piano audio only for wrong notes
  * @param keyLabel - The label/name of the key that was pressed
  * @param engine - The rhythm engine instance for game logic (can be null)
  * @param currentTime - Current time in the song/game
@@ -259,6 +258,7 @@ export const evaluateNoteHit = (
  * @param incrementCorrect - Callback function to increment correct hit counter
  * @param addPoints - Callback function to add points to the score
  * @param audioCache - React ref containing cached audio elements for better performance
+ * @param hasBackgroundAudio - Whether background song audio is playing (affects when to play piano sounds)
  */
 export const playNoteAudio = (
 	keyLabel: string,
@@ -269,24 +269,53 @@ export const playNoteAudio = (
 	incrementCorrect: () => void,
 	addPoints: (points: number) => void,
 	audioCache: React.MutableRefObject<Map<string, HTMLAudioElement>>,
+	hasBackgroundAudio: boolean = false,
 ) => {
 	const noteData = notes[keyLabel as keyof typeof notes];
 	if (!noteData) return;
 
-	let audioElement = audioCache.current.get(keyLabel);
-	if (!audioElement) {
-		audioElement = new Audio(`/sounds/${noteData.fileName}`);
-		audioCache.current.set(keyLabel, audioElement);
+	// First evaluate the hit to determine if it was correct or wrong
+	const hitJudgement = engine ? engine.handleKeyPress(keyLabel, currentTime) : "miss";
+	const isIncorrectHit = hitJudgement === "miss" || hitJudgement === "wrongKey";
+
+	// Update score based on hit judgement
+	if (isIncorrectHit) {
+		incrementWrong();
+	} else {
+		incrementCorrect();
 	}
 
-	audioElement.currentTime = 0;
-	audioElement.play().catch(() => {});
+	const judgementInfo = JUDGEMENT_INFO[hitJudgement];
+	const hasPointsToAdd = judgementInfo.points > 0;
 
+	if (hasPointsToAdd) {
+		addPoints(judgementInfo.points);
+	}
+
+	// When background audio is playing, only play piano sounds for wrong notes
+	// When no background audio, always play piano sounds (classic mode)
+	const shouldPlayPianoSound = !hasBackgroundAudio || isIncorrectHit;
+
+	if (shouldPlayPianoSound) {
+		let audioElement = audioCache.current.get(keyLabel);
+		if (!audioElement) {
+			audioElement = new Audio(`/sounds/${noteData.fileName}`);
+			audioElement.volume = hasBackgroundAudio ? 0.6 : 1.0; // Lower volume when background audio is playing
+			audioCache.current.set(keyLabel, audioElement);
+		}
+
+		// Prevent overlapping sounds by stopping current playback before starting new one
+		if (!audioElement.paused) {
+			audioElement.pause();
+		}
+		audioElement.currentTime = 0;
+		audioElement.play().catch(() => {});
+	}
+
+	// Show visual feedback for the hit judgement (single update to avoid conflicts)
 	activeKeys.set(keyLabel, {
 		expiry: performance.now() + KEY_HIGHLIGHT_MS,
-		color: DEFAULT_AUDIO_HIGHLIGHT_COLOR,
-		label: "",
+		color: judgementInfo.color,
+		label: judgementInfo.text,
 	});
-
-	evaluateNoteHit(keyLabel, engine, currentTime, activeKeys, incrementWrong, incrementCorrect, addPoints);
 };

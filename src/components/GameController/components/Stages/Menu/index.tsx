@@ -85,7 +85,7 @@ export const Menu = () => {
 				>
 					{Object.entries(allSongs).map(([id, song]) => (
 						<MenuItem key={id} value={id}>
-							{song.name} - {song.artist}
+							{song.name} - {song.artist} {song.audioUrl ? "🎵" : ""}
 						</MenuItem>
 					))}
 				</Select>

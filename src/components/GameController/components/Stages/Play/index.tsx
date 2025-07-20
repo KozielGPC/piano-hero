@@ -3,6 +3,7 @@ import { Card, CardContent } from "@mui/material";
 import { Slide } from "@mui/material";
 
 import { Box } from "@mui/material";
+import { useEffect, useRef } from "react";
 import { useGame } from "../../../../../context/GameContext";
 import { InteractivePianoCanvas } from "../../../../PianoCanvas";
 import { IFallingNote } from "../../../../PianoCanvas/types";
@@ -10,7 +11,58 @@ import { notes } from "../../../../../utils/constants";
 import { Header } from "./components/Header";
 
 export const Play = () => {
-	const { gameState, currentTime, currentSong } = useGame();
+	const { gameState, currentTime, currentSong, currentSongAudioUrl } = useGame();
+	const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
+
+	// Handle background audio creation (only when URL changes)
+	useEffect(() => {
+		if (!currentSongAudioUrl) {
+			// Clean up any existing audio
+			if (backgroundAudioRef.current) {
+				backgroundAudioRef.current.pause();
+				backgroundAudioRef.current = null;
+			}
+			return;
+		}
+
+		console.log("Creating background audio element");
+
+		// Create and setup audio element ONCE
+		const audio = new Audio(currentSongAudioUrl);
+		audio.volume = 0.8;
+		backgroundAudioRef.current = audio;
+
+		return () => {
+			// Cleanup: pause and remove reference
+			if (backgroundAudioRef.current) {
+				backgroundAudioRef.current.pause();
+				backgroundAudioRef.current = null;
+			}
+		};
+	}, [currentSongAudioUrl]); // Only recreate when URL changes
+
+	// Simple play/pause control - let audio run naturally
+	useEffect(() => {
+		if (!backgroundAudioRef.current || !currentSongAudioUrl) return;
+
+		const audio = backgroundAudioRef.current;
+		
+		if (gameState === "PLAYING") {
+			// Only set time when starting to play
+			if (audio.paused) {
+				audio.currentTime = currentTime;
+				console.log("Starting audio at:", currentTime);
+			}
+			audio.play().catch(error => {
+				console.warn("Audio play failed:", error);
+			});
+		} else if (gameState === "PAUSED") {
+			console.log("Pausing audio");
+			audio.pause();
+		}
+	}, [gameState]); // Only when game state changes
+
+
 
 	const fallingNotes: IFallingNote[] = (currentSong || []).map((n) => {
 		// Find the constant-key (e.g., "Q", "E", "Z") whose `note` char matches the saved value
@@ -53,6 +105,7 @@ export const Play = () => {
 							currentTime={currentTime}
 							width={800}
 							height={400}
+							hasBackgroundAudio={!!currentSongAudioUrl}
 						/>
 					</Box>
 				</Box>

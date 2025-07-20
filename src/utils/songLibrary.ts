@@ -7,6 +7,8 @@ export interface Song {
   artist?: string;
   difficulty?: 'Easy' | 'Medium' | 'Hard';
   notes: INotes[];
+  audioUrl?: string; // URL or blob URL for the audio file
+  audioDuration?: number; // Duration in seconds
 }
 
 // Predefined songs
@@ -54,12 +56,30 @@ export const importSongFromJSON = (jsonString: string): Song => {
       }
     });
 
+    // Handle audio data if present
+    let audioUrl = songData.audioUrl;
+    if (audioUrl && audioUrl.startsWith('data:')) {
+      // If it's base64 data, convert it to a blob URL for better performance
+      try {
+        const response = fetch(audioUrl);
+        response.then(res => res.blob()).then(blob => {
+          audioUrl = URL.createObjectURL(blob);
+        }).catch(() => {
+          // Keep original data URL if conversion fails
+        });
+      } catch {
+        // Keep original data URL if conversion fails
+      }
+    }
+
     return {
       id: `uploaded-${Date.now()}`,
       name: songData.name,
       artist: songData.artist || 'Unknown Artist',
       difficulty: 'Medium', // Default difficulty for uploaded songs
-      notes: songData.notes
+      notes: songData.notes,
+      audioUrl: audioUrl,
+      audioDuration: songData.audioDuration
     };
   } catch (error) {
     throw new Error(`Failed to import song: ${error instanceof Error ? error.message : 'Unknown error'}`);
