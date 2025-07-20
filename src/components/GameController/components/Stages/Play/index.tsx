@@ -13,8 +13,9 @@ import { Header } from "./components/Header";
 export const Play = () => {
 	const { gameState, currentTime, currentSong, currentSongAudioUrl } = useGame();
 	const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
+	const audioStartedRef = useRef<boolean>(false);
 
-	// Handle background audio creation (only when URL changes)
+	// Create audio element once and start it immediately
 	useEffect(() => {
 		if (!currentSongAudioUrl) {
 			// Clean up any existing audio
@@ -22,45 +23,52 @@ export const Play = () => {
 				backgroundAudioRef.current.pause();
 				backgroundAudioRef.current = null;
 			}
+			audioStartedRef.current = false;
 			return;
 		}
 
-		console.log("Creating background audio element");
-
-		// Create and setup audio element ONCE
+		// Create audio element
 		const audio = new Audio(currentSongAudioUrl);
 		audio.volume = 0.8;
 		backgroundAudioRef.current = audio;
 
+		// Start audio immediately and let it run on its own timeline
+		audio.play().then(() => {
+			audioStartedRef.current = true;
+		}).catch(error => {
+			console.warn("Failed to start background audio:", error);
+		});
+
 		return () => {
-			// Cleanup: pause and remove reference
+			// Cleanup
 			if (backgroundAudioRef.current) {
 				backgroundAudioRef.current.pause();
 				backgroundAudioRef.current = null;
 			}
+			audioStartedRef.current = false;
 		};
-	}, [currentSongAudioUrl]); // Only recreate when URL changes
+	}, [currentSongAudioUrl]);
 
-	// Simple play/pause control - let audio run naturally
+	// Simple pause/resume control - NO time syncing
 	useEffect(() => {
-		if (!backgroundAudioRef.current || !currentSongAudioUrl) return;
+		if (!backgroundAudioRef.current || !audioStartedRef.current) {
+			return;
+		}
 
 		const audio = backgroundAudioRef.current;
 		
 		if (gameState === "PLAYING") {
-			// Only set time when starting to play
 			if (audio.paused) {
-				audio.currentTime = currentTime;
-				console.log("Starting audio at:", currentTime);
+				audio.play().catch(error => {
+					console.warn("Audio resume failed:", error);
+				});
 			}
-			audio.play().catch(error => {
-				console.warn("Audio play failed:", error);
-			});
 		} else if (gameState === "PAUSED") {
-			console.log("Pausing audio");
-			audio.pause();
+			if (!audio.paused) {
+				audio.pause();
+			}
 		}
-	}, [gameState]); // Only when game state changes
+	}, [gameState]);
 
 
 

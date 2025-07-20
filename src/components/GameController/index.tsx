@@ -51,9 +51,15 @@ const GameController = () => {
 			alignItems="center"
 			minHeight="50vh"
 			p={2}
+			position="relative"
 			sx={{
 				width: "100%",
 				...(gameState === "PLAYING" && {
+					minHeight: "80vh",
+					alignItems: "flex-start",
+					pt: 2,
+				}),
+				...(gameState === "PAUSED" && {
 					minHeight: "80vh",
 					alignItems: "flex-start",
 					pt: 2,
@@ -67,11 +73,29 @@ const GameController = () => {
 			}}
 		>
 			{gameState === "MENU" && <Menu />}
-			{gameState === "PLAYING" && <Play />}
-			{gameState === "PAUSED" && <Pause />}
+			{(gameState === "PLAYING" || gameState === "PAUSED") && <Play />}
 			{gameState === "ENDED" && <EndGame />}
 			{gameState === "LOADING" && <Loading />}
 			{gameState === "SONG_EDITOR" && renderSongEditorState()}
+
+			{gameState === "PAUSED" && (
+				<Box
+					position="absolute"
+					top={0}
+					left={0}
+					right={0}
+					bottom={0}
+					display="flex"
+					justifyContent="center"
+					alignItems="center"
+					sx={{
+						backgroundColor: "rgb(255, 255, 255)",
+						zIndex: 1000,
+					}}
+				>
+					<Pause />
+				</Box>
+			)}
 		</Box>
 	);
 };
