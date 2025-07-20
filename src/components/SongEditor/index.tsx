@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, IconButton, Alert } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import WaveSurfer from "wavesurfer.js";
 import { notes, NoteType } from "../../utils/constants";
 import { IFallingNote } from "../PianoCanvas/types";
 import { INotes } from "../../utils/interfaces";
@@ -13,6 +12,7 @@ import { EditNoteDialog } from "./components/EditNoteDialog";
 import { NoteSelection } from "./components/NoteSelection";
 import { InteractiveGamePreview } from "./components/InteractiveGamePreview";
 import { AudioUpload } from "./components/AudioUpload";
+import { useSongFileHandler } from "../../hooks/useSongFileHandler";
 
 interface SongEditorProps {
 	onBack: () => void;
@@ -20,7 +20,6 @@ interface SongEditorProps {
 }
 
 const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
-	// No hook needed for activeKeys (module-level map)
 	const [songData, setSongData] = useState<SongData>({
 		name: "",
 		artist: "",
@@ -28,8 +27,6 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		duration: 0,
 		notes: [],
 	});
-	const [currentTime, setCurrentTime] = useState(0);
-	const [isPlaying, setIsPlaying] = useState(false);
 	const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
 	const [error, setError] = useState<string>("");
 	const [success, setSuccess] = useState<string>("");
@@ -37,9 +34,30 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [noteDuration, setNoteDuration] = useState(1);
 
-	const waveformRef = useRef<HTMLDivElement>(null);
-	const wavesurfer = useRef<WaveSurfer | null>(null);
-	const lastTimeRef = useRef<number>(0);
+	const {
+		currentTime,
+		isPlaying,
+		audioFile,
+		duration,
+		waveformRef,
+		actions: { handleFileUpload, togglePlayback, stopPlayback, skipTime },
+	} = useSongFileHandler({
+		onError: (errorMessage: string) => {
+			setError(errorMessage);
+		},
+		onSuccess: (successMessage: string) => {
+			setSuccess(successMessage);
+			setTimeout(() => setSuccess(""), 3000);
+		},
+	});
+
+	useEffect(() => {
+		setSongData((prev) => ({
+			...prev,
+			audioFile,
+			duration,
+		}));
+	}, [audioFile, duration]);
 
 	// Convert editor notes to the format expected by the shared piano canvas
 	const fallingNotes: IFallingNote[] = songData.notes
@@ -57,158 +75,6 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 			}),
 		)
 		.filter(Boolean) as IFallingNote[];
-
-	// Initialize WaveSurfer
-	useEffect(() => {
-		if (waveformRef.current && !wavesurfer.current) {
-			wavesurfer.current = initializeWaveSurfer();
-		}
-
-		return () => {
-			if (wavesurfer.current) {
-				wavesurfer.current.destroy();
-				wavesurfer.current = null;
-			}
-		};
-	}, []); // Remove songData.duration from dependencies
-
-	const seekToTime = (time: number) => {
-		if (!wavesurfer.current || songData.duration === 0) return;
-
-		// Clamp the time to valid range
-		const clampedTime = Math.max(0, Math.min(songData.duration, time));
-
-		// Calculate seek position as a percentage (0 to 1)
-		const seekPosition = clampedTime / songData.duration;
-
-		// Seek to the position
-		wavesurfer.current.seekTo(seekPosition);
-
-		// Update current time immediately for better UX
-		setCurrentTime(clampedTime);
-	};
-
-	const skipTime = (seconds: number) => {
-		const newTime = Math.max(0, Math.min(songData.duration, currentTime + seconds));
-		seekToTime(newTime);
-	};
-
-	const initializeWaveSurfer = () => {
-		if (!waveformRef.current) return null;
-
-		const ws = WaveSurfer.create({
-			container: waveformRef.current,
-			waveColor: "#4fc3f7",
-			progressColor: "#29b6f6",
-			cursorColor: "#ff5722",
-			barWidth: 2,
-			barRadius: 3,
-			height: 60,
-			normalize: true,
-			backend: "WebAudio",
-			interact: true,
-		});
-
-		// Event handlers for time updates and interactions
-		ws.on("audioprocess", (time: number) => {
-			setCurrentTime(time);
-			lastTimeRef.current = time;
-		});
-
-		ws.on("click", (progress: number) => {
-			const duration = ws.getDuration();
-			const time = progress * duration;
-			setCurrentTime(time);
-			lastTimeRef.current = time;
-		});
-
-		ws.on("play", () => {
-			setIsPlaying(true);
-		});
-
-		ws.on("pause", () => {
-			setIsPlaying(false);
-		});
-
-		ws.on("finish", () => {
-			setIsPlaying(false);
-			setCurrentTime(0);
-		});
-
-		ws.on("ready", () => {
-			setSongData((prev) => ({
-				...prev,
-				duration: ws.getDuration(),
-			}));
-		});
-
-		ws.on("error", (error: Error) => {
-			setError(`Audio error: ${error.message}`);
-			setIsPlaying(false);
-		});
-
-		return ws;
-	};
-
-	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		if (!file) return;
-
-		if (!file.type.startsWith("audio/")) {
-			setError("Please select a valid audio file");
-			return;
-		}
-
-		setSongData((prev) => ({ ...prev, audioFile: file }));
-
-		try {
-			// Stop and reset current state
-			setCurrentTime(0);
-			setIsPlaying(false);
-
-			// Destroy existing WaveSurfer instance if it exists
-			if (wavesurfer.current) {
-				wavesurfer.current.destroy();
-				wavesurfer.current = null;
-			}
-
-			// Create new WaveSurfer instance
-			wavesurfer.current = initializeWaveSurfer();
-
-			if (wavesurfer.current) {
-				// Load the new audio file
-				const url = URL.createObjectURL(file);
-				wavesurfer.current.load(url);
-			}
-
-			setError("");
-			setSuccess("Audio file loaded successfully!");
-			setTimeout(() => setSuccess(""), 3000);
-		} catch (error) {
-			console.error("Error loading audio file:", error);
-			setError("Failed to load audio file. Please try again.");
-		}
-	};
-
-	const togglePlayback = () => {
-		if (!wavesurfer.current || !songData.audioFile) {
-			setError("Please upload an audio file first");
-			return;
-		}
-
-		if (isPlaying) {
-			wavesurfer.current.pause();
-		} else {
-			wavesurfer.current.play();
-		}
-	};
-
-	const stopPlayback = () => {
-		if (!wavesurfer.current) return;
-		wavesurfer.current.stop();
-		setCurrentTime(0);
-		setIsPlaying(false);
-	};
 
 	const addNote = (time?: number) => {
 		if (selectedNotes.length === 0) {
