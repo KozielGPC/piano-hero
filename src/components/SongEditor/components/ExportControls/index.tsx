@@ -1,14 +1,16 @@
 import { Card, CardContent, Typography, Stack, Button } from "@mui/material";
 import { GetApp, PlayArrow } from "@mui/icons-material";
 import { SongData } from "../../types";
+import { INotes } from "../../../../utils/interfaces";
 
 interface ExportControlsProps {
 	songData: SongData;
-	exportSong: () => void;
-	playSong: () => void;
+	exportSong: (songData: SongData) => void;
+	playSong: (songData: SongData, onPlaySong: (gameNotes: INotes[]) => void) => void;
+	onPlaySong: (gameNotes: INotes[]) => void;
 }
 
-export const ExportControls = ({ songData, exportSong, playSong }: ExportControlsProps) => {
+export const ExportControls = ({ songData, exportSong, playSong, onPlaySong }: ExportControlsProps) => {
 	return (
 		<Card elevation={3}>
 			<CardContent>
@@ -19,7 +21,7 @@ export const ExportControls = ({ songData, exportSong, playSong }: ExportControl
 					<Button
 						variant="contained"
 						startIcon={<GetApp />}
-						onClick={exportSong}
+						onClick={() => exportSong(songData)}
 						disabled={!songData.name.trim() || songData.notes.length === 0}
 					>
 						Export Song Data
@@ -28,7 +30,7 @@ export const ExportControls = ({ songData, exportSong, playSong }: ExportControl
 						variant="contained"
 						color="secondary"
 						startIcon={<PlayArrow />}
-						onClick={playSong}
+						onClick={() => playSong(songData, onPlaySong)}
 						disabled={!songData.name.trim() || songData.notes.length === 0}
 					>
 						Play Song

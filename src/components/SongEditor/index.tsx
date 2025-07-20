@@ -13,6 +13,7 @@ import { NoteSelection } from "./components/NoteSelection";
 import { InteractiveGamePreview } from "./components/InteractiveGamePreview";
 import { AudioUpload } from "./components/AudioUpload";
 import { useSongFileHandler } from "../../hooks/useSongFileHandler";
+import { useSongExport } from "../../hooks/useSongExport";
 
 interface SongEditorProps {
 	onBack: () => void;
@@ -42,6 +43,16 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		waveformRef,
 		actions: { handleFileUpload, togglePlayback, stopPlayback, skipTime },
 	} = useSongFileHandler({
+		onError: (errorMessage: string) => {
+			setError(errorMessage);
+		},
+		onSuccess: (successMessage: string) => {
+			setSuccess(successMessage);
+			setTimeout(() => setSuccess(""), 3000);
+		},
+	});
+
+	const { exportSong, playSong } = useSongExport({
 		onError: (errorMessage: string) => {
 			setError(errorMessage);
 		},
@@ -109,87 +120,6 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		}));
 	};
 
-	const exportSong = () => {
-		if (!songData.name.trim()) {
-			setError("Please enter a song name");
-			return;
-		}
-
-		if (songData.notes.length === 0) {
-			setError("Please add at least one note");
-			return;
-		}
-
-		// Convert EditorNote format to export format
-		// Each EditorNote can have multiple keys, so we need to create separate notes for each key
-		const exportNotes: INotes[] = [];
-
-		songData.notes.forEach((editorNote) => {
-			editorNote.keys.forEach((key) => {
-				const noteData = notes[key as keyof typeof notes];
-				if (noteData) {
-					exportNotes.push({
-						note: key,
-						offset: noteData.offset,
-						type: noteData.type,
-						displayAftertimeSeconds: editorNote.time,
-					});
-				}
-			});
-		});
-
-		const exportData = {
-			name: songData.name,
-			artist: songData.artist,
-			notes: exportNotes,
-		};
-
-		const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-			type: "application/json",
-		});
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = `${songData.name.replace(/\s+/g, "_")}.json`;
-		a.click();
-		URL.revokeObjectURL(url);
-
-		setSuccess("Song exported successfully!");
-		setTimeout(() => setSuccess(""), 3000);
-	};
-
-	const playSong = () => {
-		if (!songData.name.trim()) {
-			setError("Please enter a song name");
-			return;
-		}
-
-		if (songData.notes.length === 0) {
-			setError("Please add at least one note");
-			return;
-		}
-
-		// Convert EditorNote format to INotes format
-		// Each EditorNote can have multiple keys, so we need to create separate notes for each key
-		const gameNotes: INotes[] = [];
-
-		songData.notes.forEach((editorNote) => {
-			editorNote.keys.forEach((key) => {
-				const noteData = notes[key as keyof typeof notes];
-				if (noteData) {
-					gameNotes.push({
-						note: key,
-						offset: noteData.offset,
-						type: noteData.type,
-						displayAftertimeSeconds: editorNote.time,
-					});
-				}
-			});
-		});
-
-		onPlaySong(gameNotes);
-	};
-
 	return (
 		<Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
 			<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
@@ -248,7 +178,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				deleteNote={deleteNote}
 			/>
 
-			<ExportControls songData={songData} exportSong={exportSong} playSong={playSong} />
+			<ExportControls songData={songData} exportSong={exportSong} playSong={playSong} onPlaySong={onPlaySong} />
 
 			<EditNoteDialog
 				editDialogOpen={editDialogOpen}
