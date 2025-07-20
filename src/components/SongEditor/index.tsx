@@ -61,57 +61,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 	// Initialize WaveSurfer
 	useEffect(() => {
 		if (waveformRef.current && !wavesurfer.current) {
-			wavesurfer.current = WaveSurfer.create({
-				container: waveformRef.current,
-				waveColor: "#4fc3f7",
-				progressColor: "#29b6f6",
-				cursorColor: "#ff5722",
-				barWidth: 2,
-				barRadius: 3,
-				height: 60,
-				normalize: true,
-				backend: "WebAudio",
-				interact: true,
-			});
-
-			// Event handlers for time updates and interactions
-			wavesurfer.current.on("audioprocess", (time: number) => {
-				setCurrentTime(time);
-				lastTimeRef.current = time;
-			});
-
-			wavesurfer.current.on("click", (progress: number) => {
-				const time = progress * songData.duration;
-				setCurrentTime(time);
-				lastTimeRef.current = time;
-			});
-
-			wavesurfer.current.on("play", () => {
-				setIsPlaying(true);
-			});
-
-			wavesurfer.current.on("pause", () => {
-				setIsPlaying(false);
-			});
-
-			wavesurfer.current.on("finish", () => {
-				setIsPlaying(false);
-				setCurrentTime(0);
-			});
-
-			wavesurfer.current.on("ready", () => {
-				if (wavesurfer.current) {
-					setSongData((prev) => ({
-						...prev,
-						duration: wavesurfer.current!.getDuration(),
-					}));
-				}
-			});
-
-			wavesurfer.current.on("error", (error: Error) => {
-				setError(`Audio error: ${error.message}`);
-				setIsPlaying(false);
-			});
+			wavesurfer.current = initializeWaveSurfer();
 		}
 
 		return () => {
@@ -120,7 +70,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				wavesurfer.current = null;
 			}
 		};
-	}, [songData.duration]);
+	}, []); // Remove songData.duration from dependencies
 
 	const seekToTime = (time: number) => {
 		if (!wavesurfer.current || songData.duration === 0) return;
@@ -138,14 +88,66 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		setCurrentTime(clampedTime);
 	};
 
-	const handleSliderChange = (_event: Event | React.SyntheticEvent<Element, Event>, newValue: number | number[]) => {
-		const time = Array.isArray(newValue) ? newValue[0] : newValue;
-		seekToTime(time);
-	};
-
 	const skipTime = (seconds: number) => {
 		const newTime = Math.max(0, Math.min(songData.duration, currentTime + seconds));
 		seekToTime(newTime);
+	};
+
+	const initializeWaveSurfer = () => {
+		if (!waveformRef.current) return null;
+
+		const ws = WaveSurfer.create({
+			container: waveformRef.current,
+			waveColor: "#4fc3f7",
+			progressColor: "#29b6f6",
+			cursorColor: "#ff5722",
+			barWidth: 2,
+			barRadius: 3,
+			height: 60,
+			normalize: true,
+			backend: "WebAudio",
+			interact: true,
+		});
+
+		// Event handlers for time updates and interactions
+		ws.on("audioprocess", (time: number) => {
+			setCurrentTime(time);
+			lastTimeRef.current = time;
+		});
+
+		ws.on("click", (progress: number) => {
+			const duration = ws.getDuration();
+			const time = progress * duration;
+			setCurrentTime(time);
+			lastTimeRef.current = time;
+		});
+
+		ws.on("play", () => {
+			setIsPlaying(true);
+		});
+
+		ws.on("pause", () => {
+			setIsPlaying(false);
+		});
+
+		ws.on("finish", () => {
+			setIsPlaying(false);
+			setCurrentTime(0);
+		});
+
+		ws.on("ready", () => {
+			setSongData((prev) => ({
+				...prev,
+				duration: ws.getDuration(),
+			}));
+		});
+
+		ws.on("error", (error: Error) => {
+			setError(`Audio error: ${error.message}`);
+			setIsPlaying(false);
+		});
+
+		return ws;
 	};
 
 	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,14 +161,33 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 
 		setSongData((prev) => ({ ...prev, audioFile: file }));
 
-		if (wavesurfer.current) {
-			const url = URL.createObjectURL(file);
-			wavesurfer.current.load(url);
-		}
+		try {
+			// Stop and reset current state
+			setCurrentTime(0);
+			setIsPlaying(false);
 
-		setError("");
-		setSuccess("Audio file loaded successfully!");
-		setTimeout(() => setSuccess(""), 3000);
+			// Destroy existing WaveSurfer instance if it exists
+			if (wavesurfer.current) {
+				wavesurfer.current.destroy();
+				wavesurfer.current = null;
+			}
+
+			// Create new WaveSurfer instance
+			wavesurfer.current = initializeWaveSurfer();
+
+			if (wavesurfer.current) {
+				// Load the new audio file
+				const url = URL.createObjectURL(file);
+				wavesurfer.current.load(url);
+			}
+
+			setError("");
+			setSuccess("Audio file loaded successfully!");
+			setTimeout(() => setSuccess(""), 3000);
+		} catch (error) {
+			console.error("Error loading audio file:", error);
+			setError("Failed to load audio file. Please try again.");
+		}
 	};
 
 	const togglePlayback = () => {
@@ -334,7 +355,6 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				togglePlayback={togglePlayback}
 				skipTime={skipTime}
 				currentTime={currentTime}
-				handleSliderChange={handleSliderChange}
 				waveformRef={waveformRef}
 				isPlaying={isPlaying}
 				stopPlayback={stopPlayback}

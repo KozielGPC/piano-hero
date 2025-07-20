@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Button, Stack, IconButton, Slider, Box } from "@mui/material";
+import { Card, CardContent, Typography, Button, Stack, IconButton, Box } from "@mui/material";
 import { formatTime } from "../../utils";
 import { SongData } from "../../types";
 import { Upload, SkipPrevious, Pause, PlayArrow, Stop, SkipNext } from "@mui/icons-material";
@@ -9,7 +9,6 @@ interface AudioUploadProps {
 	togglePlayback: () => void;
 	skipTime: (seconds: number) => void;
 	currentTime: number;
-	handleSliderChange: (event: Event | React.SyntheticEvent<Element, Event>, newValue: number | number[]) => void;
 	waveformRef: React.RefObject<HTMLDivElement>;
 	isPlaying: boolean;
 	stopPlayback: () => void;
@@ -20,7 +19,6 @@ export const AudioUpload = ({
 	togglePlayback,
 	skipTime,
 	currentTime,
-	handleSliderChange,
 	waveformRef,
 	isPlaying,
 	stopPlayback,
@@ -70,20 +68,6 @@ export const AudioUpload = ({
 						{formatTime(currentTime)} / {formatTime(songData.duration)}
 					</Typography>
 				</Stack>
-
-				{/* Time Slider */}
-				<Box sx={{ mt: 2 }}>
-					<Slider
-						value={currentTime}
-						min={0}
-						max={songData.duration || 100}
-						step={0.1}
-						onChange={handleSliderChange}
-						disabled={!songData.audioFile}
-						valueLabelDisplay="auto"
-						valueLabelFormat={(value) => formatTime(value)}
-					/>
-				</Box>
 			</CardContent>
 		</Card>
 	);
