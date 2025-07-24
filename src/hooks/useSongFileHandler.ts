@@ -16,6 +16,7 @@ interface UseSongFileHandlerReturn {
 		skipTime: (seconds: number) => void;
 		setAudioFile: (file: File | null) => void;
 		setDuration: (duration: number) => void;
+		loadImportedAudioFile: (file: File, duration: number) => void;
 	};
 }
 
@@ -160,6 +161,36 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 		}
 	};
 
+	// New function to load imported audio files properly
+	const loadImportedAudioFile = (file: File, importedDuration: number) => {
+		setAudioFile(file);
+
+		try {
+			setCurrentTime(0);
+			setIsPlaying(false);
+
+			if (wavesurfer.current) {
+				wavesurfer.current.destroy();
+				wavesurfer.current = null;
+			}
+
+			wavesurfer.current = initializeWaveSurfer();
+
+			if (wavesurfer.current) {
+				const url = URL.createObjectURL(file);
+				wavesurfer.current.load(url);
+				
+				// Set the imported duration immediately
+				setDuration(importedDuration);
+			}
+
+			onSuccess("Imported audio file loaded successfully!");
+		} catch (error) {
+			console.error("Error loading imported audio file:", error);
+			onError("Failed to load imported audio file. Please try again.");
+		}
+	};
+
 	const togglePlayback = () => {
 		if (!wavesurfer.current || !audioFile) {
 			onError("Please upload an audio file first");
@@ -195,6 +226,7 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 			skipTime,
 			setAudioFile,
 			setDuration,
+			loadImportedAudioFile,
 		},
 	};
 };

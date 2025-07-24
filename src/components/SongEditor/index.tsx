@@ -12,6 +12,7 @@ import { EditNoteDialog } from "./components/EditNoteDialog";
 import { NoteSelection } from "./components/NoteSelection";
 import { InteractiveGamePreview } from "./components/InteractiveGamePreview";
 import { AudioUpload } from "./components/AudioUpload";
+import { SongImport } from "./components/SongImport";
 import { useSongFileHandler } from "../../hooks/useSongFileHandler";
 import { useSongExport } from "../../hooks/useSongExport";
 
@@ -41,7 +42,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		audioFile,
 		duration,
 		waveformRef,
-		actions: { handleFileUpload, togglePlayback, stopPlayback, skipTime },
+		actions: { handleFileUpload, togglePlayback, stopPlayback, skipTime, loadImportedAudioFile },
 	} = useSongFileHandler({
 		onError: (errorMessage: string) => {
 			setError(errorMessage);
@@ -69,6 +70,16 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 			duration,
 		}));
 	}, [audioFile, duration]);
+
+	// Handle imported song data
+	const handleImportSong = (importedSongData: SongData) => {
+		setSongData(importedSongData);
+		
+		// If there's an audio file, load it properly with WaveSurfer initialization
+		if (importedSongData.audioFile && importedSongData.duration) {
+			loadImportedAudioFile(importedSongData.audioFile, importedSongData.duration);
+		}
+	};
 
 	// Convert editor notes to the format expected by the shared piano canvas
 	const fallingNotes: IFallingNote[] = songData.notes
@@ -223,6 +234,12 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 					{success}
 				</Alert>
 			)}
+
+			<SongImport
+				onImportSong={handleImportSong}
+				onError={setError}
+				onSuccess={setSuccess}
+			/>
 
 			<SongInformation songData={songData} setSongData={setSongData} />
 
