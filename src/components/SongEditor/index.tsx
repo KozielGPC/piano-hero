@@ -173,6 +173,34 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		// No success message for drag operations - visual feedback is sufficient
 	};
 
+	const updateNoteDuration = (noteIndex: number, newDuration: number) => {
+		const fallingNoteIndex = noteIndex;
+		if (fallingNoteIndex < 0 || fallingNoteIndex >= fallingNotes.length) return;
+
+		// Find the corresponding editor note
+		const fallingNote = fallingNotes[fallingNoteIndex];
+		const editorNoteIndex = songData.notes.findIndex(note => 
+			note.time === fallingNote.time && 
+			note.keys.includes(fallingNote.note)
+		);
+
+		if (editorNoteIndex === -1) return;
+
+		setSongData((prev) => {
+			const newNotes = [...prev.notes];
+			newNotes[editorNoteIndex] = {
+				...newNotes[editorNoteIndex],
+				duration: newDuration
+			};
+			return {
+				...prev,
+				notes: newNotes,
+			};
+		});
+
+		// No success message for drag operations - visual feedback is sufficient
+	};
+
 	return (
 		<Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
 			<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
@@ -216,6 +244,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				addNote={addNote}
 				onAddNoteAtKey={addNoteAtKey}
 				onUpdateNoteTime={updateNoteTime}
+				onUpdateNoteDuration={updateNoteDuration}
 			/>
 
 			<NoteSelection

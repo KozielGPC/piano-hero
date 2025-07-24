@@ -13,6 +13,7 @@ interface IProps {
 	onAddNote?: () => void;
 	onAddNoteAtKey?: (key: string, time: number) => void; // New callback for adding note at specific key and time
 	onUpdateNoteTime?: (noteIndex: number, newTime: number) => void; // New callback for updating note timing
+	onUpdateNoteDuration?: (noteIndex: number, newDuration: number) => void; // New callback for updating note duration
 	width?: number;
 	height?: number;
 	hasBackgroundAudio?: boolean; // Whether background song audio is playing
@@ -25,6 +26,8 @@ interface DragState {
 	startY: number;
 	startTime: number;
 	currentY: number;
+	dragMode: 'timing' | 'duration-bottom';
+	originalDuration?: number;
 }
 
 
@@ -38,6 +41,7 @@ export const InteractivePianoCanvas = ({
 	onAddNote,
 	onAddNoteAtKey,
 	onUpdateNoteTime,
+	onUpdateNoteDuration,
 	width = 800,
 	height = CANVAS_HEIGHT_DEFAULT,
 	hasBackgroundAudio = false,
@@ -49,6 +53,8 @@ export const InteractivePianoCanvas = ({
 	
 	// Drag state
 	const [dragState, setDragState] = useState<DragState | null>(null);
+	// Hover state for cursor feedback
+	const [hoverCursor, setHoverCursor] = useState<string>("default");
 
 	// Build rhythm engine once per song change
 	const engineRef = useRef<RhythmEngine | null>(null);
@@ -73,8 +79,8 @@ export const InteractivePianoCanvas = ({
 
 	const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
 
-	// Helper function to find note at click position
-	const findNoteAtPosition = (x: number, y: number): number | null => {
+	// Helper function to find note at click position and determine click area
+	const findNoteAtPosition = (x: number, y: number): { noteIndex: number; area: 'bottom' | 'center' } | null => {
 		const noteAreaHeight = height - PIANO_HEIGHT;
 		
 		// Check if click is in the falling notes area
@@ -107,7 +113,14 @@ export const InteractivePianoCanvas = ({
 
 			// Check if click is within note bounds
 			if (x >= noteLeft && x <= noteRight && y >= noteTop && y <= noteBottom) {
-				return i;
+				const resizeHandleSize = 8; // 8px resize handle area
+				
+				// Determine which area was clicked (only bottom edge and center)
+				if (y >= noteBottom - resizeHandleSize) {
+					return { noteIndex: i, area: 'bottom' };
+				} else {
+					return { noteIndex: i, area: 'center' };
+				}
 			}
 		}
 		return null;
@@ -126,12 +139,23 @@ export const InteractivePianoCanvas = ({
 		// Create modified notes array for rendering if dragging
 		let notesToRender = songNotes;
 		if (dragState?.isDragging) {
-			const newTime = getTimeFromY(dragState.currentY);
 			notesToRender = [...songNotes];
-			notesToRender[dragState.noteIndex] = {
-				...notesToRender[dragState.noteIndex],
-				time: newTime
-			};
+			
+			if (dragState.dragMode === 'timing') {
+				const newTime = getTimeFromY(dragState.currentY);
+				notesToRender[dragState.noteIndex] = {
+					...notesToRender[dragState.noteIndex],
+					time: newTime
+				};
+			} else if (dragState.dragMode === 'duration-bottom') {
+				const deltaY = dragState.currentY - dragState.startY;
+				const deltaTime = (deltaY / (height - PIANO_HEIGHT - NOTE_AREA_BOTTOM_PADDING)) * LOOKAHEAD_TIME;
+				const newDuration = Math.max(0.1, (dragState.originalDuration || 1) + deltaTime);
+				notesToRender[dragState.noteIndex] = {
+					...notesToRender[dragState.noteIndex],
+					duration: newDuration
+				};
+			}
 		}
 		
 		drawCanvas(canvasRef.current, notesToRender, currentTime, height, activeKeys);
@@ -199,14 +223,25 @@ export const InteractivePianoCanvas = ({
 		e.preventDefault();
 
 		// Check if we clicked on a note
-		const noteIndex = findNoteAtPosition(x, y);
-		if (noteIndex !== null && onUpdateNoteTime) {
+		const noteResult = findNoteAtPosition(x, y);
+		if (noteResult && (onUpdateNoteTime || onUpdateNoteDuration)) {
+			const { noteIndex, area } = noteResult;
+			
+			let dragMode: 'timing' | 'duration-bottom';
+			if (area === 'bottom' && onUpdateNoteDuration) {
+				dragMode = 'duration-bottom';
+			} else {
+				dragMode = 'timing';
+			}
+			
 			setDragState({
 				isDragging: true,
 				noteIndex,
 				startY: y,
 				currentY: y,
-				startTime: songNotes[noteIndex].time
+				startTime: songNotes[noteIndex].time,
+				dragMode,
+				originalDuration: songNotes[noteIndex].duration
 			});
 			return;
 		}
@@ -216,27 +251,50 @@ export const InteractivePianoCanvas = ({
 	};
 
 	const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-		if (!dragState?.isDragging) return;
+		const { x, y } = getScaledCoordinates(e);
 
-		// Prevent default to avoid scroll issues during drag
-		e.preventDefault();
+		if (dragState?.isDragging) {
+			// Prevent default to avoid scroll issues during drag
+			e.preventDefault();
 
-		const { y } = getScaledCoordinates(e);
-
-		setDragState(prev => prev ? {
-			...prev,
-			currentY: y
-		} : null);
+			setDragState(prev => prev ? {
+				...prev,
+				currentY: y
+			} : null);
+		} else {
+			// Update cursor based on hover position when not dragging
+			const noteResult = findNoteAtPosition(x, y);
+			if (noteResult && onUpdateNoteDuration) {
+				const { area } = noteResult;
+				if (area === 'bottom') {
+					setHoverCursor('ns-resize'); // North-south resize cursor
+				} else {
+					setHoverCursor('move'); // Move cursor for timing drag
+				}
+			} else if (selectedNotes.length) {
+				setHoverCursor('crosshair'); // Crosshair for adding notes
+			} else {
+				setHoverCursor('default');
+			}
+		}
 	};
 
 	const onMouseUp = (e?: React.MouseEvent<HTMLCanvasElement>) => {
-		if (!dragState?.isDragging || !onUpdateNoteTime) return;
+		if (!dragState?.isDragging) return;
 
 		// Prevent default to avoid any unwanted browser behavior
 		if (e) e.preventDefault();
 
-		const newTime = getTimeFromY(dragState.currentY);
-		onUpdateNoteTime(dragState.noteIndex, Math.max(0, newTime)); // Ensure time is not negative
+		if (dragState.dragMode === 'timing' && onUpdateNoteTime) {
+			const newTime = getTimeFromY(dragState.currentY);
+			onUpdateNoteTime(dragState.noteIndex, Math.max(0, newTime));
+		} else if (dragState.dragMode === 'duration-bottom' && onUpdateNoteDuration) {
+			// For bottom handle, adjust duration based on how far we dragged
+			const deltaY = dragState.currentY - dragState.startY;
+			const deltaTime = (deltaY / (height - PIANO_HEIGHT - NOTE_AREA_BOTTOM_PADDING)) * LOOKAHEAD_TIME;
+			const newDuration = Math.max(0.1, (dragState.originalDuration || 1) + deltaTime);
+			onUpdateNoteDuration(dragState.noteIndex, newDuration);
+		}
 
 		setDragState(null);
 	};
@@ -294,7 +352,7 @@ export const InteractivePianoCanvas = ({
 			style={{ 
 				width: "100%", 
 				height: "auto", 
-				cursor: dragState?.isDragging ? "grabbing" : (selectedNotes.length ? "crosshair" : "default"),
+				cursor: dragState?.isDragging ? "grabbing" : hoverCursor,
 				userSelect: "none", // Prevent text selection during dragging
 				touchAction: "none" // Prevent touch scrolling on mobile
 			}}
