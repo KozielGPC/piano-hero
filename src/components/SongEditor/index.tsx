@@ -113,6 +113,29 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		setTimeout(() => setSuccess(""), 2000);
 	};
 
+	const addNoteAtKey = (key: string, time: number) => {
+		const noteData = notes[key as keyof typeof notes];
+		if (!noteData) {
+			setError(`Invalid note key: ${key}`);
+			return;
+		}
+
+		const newNote: EditorNote = {
+			id: Date.now().toString(),
+			time: time,
+			duration: noteDuration,
+			keys: [key],
+			note: key,
+			offset: noteData.offset,
+			type: noteData.type,
+		};
+
+		setSongData((prev) => ({
+			...prev,
+			notes: [...prev.notes, newNote].sort((a, b) => a.time - b.time),
+		}));
+	};
+
 	const deleteNote = (noteId: string) => {
 		setSongData((prev) => ({
 			...prev,
@@ -147,8 +170,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 			};
 		});
 
-		setSuccess(`Note timing updated to ${newTime.toFixed(2)}s`);
-		setTimeout(() => setSuccess(""), 2000);
+		// No success message for drag operations - visual feedback is sufficient
 	};
 
 	return (
@@ -192,6 +214,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				currentTime={currentTime}
 				selectedNotes={selectedNotes}
 				addNote={addNote}
+				onAddNoteAtKey={addNoteAtKey}
 				onUpdateNoteTime={updateNoteTime}
 			/>
 

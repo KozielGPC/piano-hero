@@ -9,6 +9,7 @@ interface InteractiveGamePreviewProps {
 	currentTime: number;
 	selectedNotes: string[];
 	addNote: () => void;
+	onAddNoteAtKey?: (key: string, time: number) => void;
 	onUpdateNoteTime?: (noteIndex: number, newTime: number) => void;
 }
 export const InteractiveGamePreview = ({
@@ -16,6 +17,7 @@ export const InteractiveGamePreview = ({
 	currentTime,
 	selectedNotes,
 	addNote,
+	onAddNoteAtKey,
 	onUpdateNoteTime,
 }: InteractiveGamePreviewProps) => {
 	return (
@@ -25,8 +27,7 @@ export const InteractiveGamePreview = ({
 					Interactive Game Preview - Click to Add Notes
 				</Typography>
 				<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-					This preview shows how notes will appear in the actual game. Click on the falling notes area or use
-					the Add button to place notes. <strong>Drag notes up/down to change their timing!</strong>
+					This preview shows how notes will appear in the actual game. <strong>Click directly on piano keys to add notes</strong> at the current time, or use the Add button to place pre-selected notes. <strong>Drag notes up/down to change their timing!</strong>
 				</Typography>
 
 				<Paper
@@ -44,6 +45,7 @@ export const InteractiveGamePreview = ({
 						currentTime={currentTime}
 						selectedNotes={selectedNotes}
 						onAddNote={() => addNote()}
+						onAddNoteAtKey={onAddNoteAtKey}
 						onUpdateNoteTime={onUpdateNoteTime}
 						width={800}
 						height={CANVAS_HEIGHT}

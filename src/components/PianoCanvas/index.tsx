@@ -11,6 +11,7 @@ interface IProps {
 	currentTime: number;
 	selectedNotes?: string[]; // if provided, click on falling area will invoke onAddNote
 	onAddNote?: () => void;
+	onAddNoteAtKey?: (key: string, time: number) => void; // New callback for adding note at specific key and time
 	onUpdateNoteTime?: (noteIndex: number, newTime: number) => void; // New callback for updating note timing
 	width?: number;
 	height?: number;
@@ -35,6 +36,7 @@ export const InteractivePianoCanvas = ({
 	currentTime,
 	selectedNotes = [],
 	onAddNote,
+	onAddNoteAtKey,
 	onUpdateNoteTime,
 	width = 800,
 	height = CANVAS_HEIGHT_DEFAULT,
@@ -76,13 +78,7 @@ export const InteractivePianoCanvas = ({
 		const noteAreaHeight = height - PIANO_HEIGHT;
 		
 		// Check if click is in the falling notes area
-		if (y >= noteAreaHeight) {
-			console.log("Click is in piano area, not notes area");
-			return null;
-		}
-
-		console.log(`Looking for note at position (${x.toFixed(1)}, ${y.toFixed(1)})`);
-		console.log(`Note area height: ${noteAreaHeight}, current time: ${currentTime.toFixed(2)}`);
+		if (y >= noteAreaHeight) return null;
 
 		for (let i = 0; i < songNotes.length; i++) {
 			const note = songNotes[i];
@@ -109,15 +105,11 @@ export const InteractivePianoCanvas = ({
 			const noteTop = noteCenterY;
 			const noteBottom = noteCenterY + noteHeight;
 
-			console.log(`Note ${i} (${note.note}): bounds (${noteLeft.toFixed(1)}, ${noteTop.toFixed(1)}) to (${noteRight.toFixed(1)}, ${noteBottom.toFixed(1)})`);
-
 			// Check if click is within note bounds
 			if (x >= noteLeft && x <= noteRight && y >= noteTop && y <= noteBottom) {
-				console.log(`Found note ${i} at position!`);
 				return i;
 			}
 		}
-		console.log("No note found at position");
 		return null;
 	};
 
@@ -203,6 +195,9 @@ export const InteractivePianoCanvas = ({
 	const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		const { x, y } = getScaledCoordinates(e);
 
+		// Always prevent default to avoid scroll issues
+		e.preventDefault();
+
 		// Check if we clicked on a note
 		const noteIndex = findNoteAtPosition(x, y);
 		if (noteIndex !== null && onUpdateNoteTime) {
@@ -213,7 +208,6 @@ export const InteractivePianoCanvas = ({
 				currentY: y,
 				startTime: songNotes[noteIndex].time
 			});
-			e.preventDefault();
 			return;
 		}
 
@@ -224,6 +218,9 @@ export const InteractivePianoCanvas = ({
 	const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		if (!dragState?.isDragging) return;
 
+		// Prevent default to avoid scroll issues during drag
+		e.preventDefault();
+
 		const { y } = getScaledCoordinates(e);
 
 		setDragState(prev => prev ? {
@@ -232,8 +229,11 @@ export const InteractivePianoCanvas = ({
 		} : null);
 	};
 
-	const onMouseUp = () => {
+	const onMouseUp = (e?: React.MouseEvent<HTMLCanvasElement>) => {
 		if (!dragState?.isDragging || !onUpdateNoteTime) return;
+
+		// Prevent default to avoid any unwanted browser behavior
+		if (e) e.preventDefault();
 
 		const newTime = getTimeFromY(dragState.currentY);
 		onUpdateNoteTime(dragState.noteIndex, Math.max(0, newTime)); // Ensure time is not negative
@@ -244,10 +244,15 @@ export const InteractivePianoCanvas = ({
 	const onCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		if (dragState?.isDragging) return; // Don't process clicks during drag
 
+		// Prevent default to avoid any unwanted browser behavior
+		e.preventDefault();
+
 		const { x, y } = getScaledCoordinates(e);
 		if (y < height - PIANO_HEIGHT) {
+			// Click in falling notes area
 			if (selectedNotes.length && onAddNote) onAddNote();
 		} else {
+			// Click on piano keys
 			let nearest: string | null = null;
 			let min = Infinity;
 			Object.keys(notes).forEach((k) => {
@@ -258,18 +263,26 @@ export const InteractivePianoCanvas = ({
 					nearest = k;
 				}
 			});
-			if (nearest && min <= WHITE_KEY_WIDTH / 2)
-				playNoteAudio(
-					nearest,
-					engineRef.current,
-					currentTimeRef.current,
-					activeKeys,
-					actions.incrementWrong,
-					actions.incrementCorrect,
-					actions.addPoints,
-					audioCache,
-					hasBackgroundAudio,
-				);
+			
+			if (nearest && min <= WHITE_KEY_WIDTH / 2) {
+				// Add note at this key and current time if callback is provided
+				if (onAddNoteAtKey) {
+					onAddNoteAtKey(nearest, currentTimeRef.current);
+				} else {
+					// Fallback to just playing audio (original behavior)
+					playNoteAudio(
+						nearest,
+						engineRef.current,
+						currentTimeRef.current,
+						activeKeys,
+						actions.incrementWrong,
+						actions.incrementCorrect,
+						actions.addPoints,
+						audioCache,
+						hasBackgroundAudio,
+					);
+				}
+			}
 		}
 	};
 
@@ -281,12 +294,17 @@ export const InteractivePianoCanvas = ({
 			style={{ 
 				width: "100%", 
 				height: "auto", 
-				cursor: dragState?.isDragging ? "grabbing" : (selectedNotes.length ? "crosshair" : "default")
+				cursor: dragState?.isDragging ? "grabbing" : (selectedNotes.length ? "crosshair" : "default"),
+				userSelect: "none", // Prevent text selection during dragging
+				touchAction: "none" // Prevent touch scrolling on mobile
 			}}
 			onMouseDown={onMouseDown}
 			onMouseMove={onMouseMove}
 			onMouseUp={onMouseUp}
-			onMouseLeave={() => setDragState(null)} // Cancel drag if mouse leaves canvas
+			onMouseLeave={(e) => {
+				e.preventDefault();
+				setDragState(null); // Cancel drag if mouse leaves canvas
+			}}
 		/>
 	);
 };
