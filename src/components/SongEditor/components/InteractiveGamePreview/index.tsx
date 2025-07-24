@@ -9,12 +9,14 @@ interface InteractiveGamePreviewProps {
 	currentTime: number;
 	selectedNotes: string[];
 	addNote: () => void;
+	onUpdateNoteTime?: (noteIndex: number, newTime: number) => void;
 }
 export const InteractiveGamePreview = ({
 	fallingNotes,
 	currentTime,
 	selectedNotes,
 	addNote,
+	onUpdateNoteTime,
 }: InteractiveGamePreviewProps) => {
 	return (
 		<Card elevation={3} sx={{ mb: 3 }}>
@@ -24,7 +26,7 @@ export const InteractiveGamePreview = ({
 				</Typography>
 				<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
 					This preview shows how notes will appear in the actual game. Click on the falling notes area or use
-					the Add button to place notes.
+					the Add button to place notes. <strong>Drag notes up/down to change their timing!</strong>
 				</Typography>
 
 				<Paper
@@ -42,6 +44,7 @@ export const InteractiveGamePreview = ({
 						currentTime={currentTime}
 						selectedNotes={selectedNotes}
 						onAddNote={() => addNote()}
+						onUpdateNoteTime={onUpdateNoteTime}
 						width={800}
 						height={CANVAS_HEIGHT}
 					/>

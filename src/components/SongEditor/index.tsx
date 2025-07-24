@@ -120,6 +120,37 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		}));
 	};
 
+	const updateNoteTime = (noteIndex: number, newTime: number) => {
+		const fallingNoteIndex = noteIndex;
+		if (fallingNoteIndex < 0 || fallingNoteIndex >= fallingNotes.length) return;
+
+		// Find the corresponding editor note
+		const fallingNote = fallingNotes[fallingNoteIndex];
+		const editorNoteIndex = songData.notes.findIndex(note => 
+			note.time === fallingNote.time && 
+			note.keys.includes(fallingNote.note)
+		);
+
+		if (editorNoteIndex === -1) return;
+
+		setSongData((prev) => {
+			const newNotes = [...prev.notes];
+			newNotes[editorNoteIndex] = {
+				...newNotes[editorNoteIndex],
+				time: newTime
+			};
+			// Sort notes by time after updating
+			newNotes.sort((a, b) => a.time - b.time);
+			return {
+				...prev,
+				notes: newNotes,
+			};
+		});
+
+		setSuccess(`Note timing updated to ${newTime.toFixed(2)}s`);
+		setTimeout(() => setSuccess(""), 2000);
+	};
+
 	return (
 		<Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
 			<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
@@ -161,6 +192,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				currentTime={currentTime}
 				selectedNotes={selectedNotes}
 				addNote={addNote}
+				onUpdateNoteTime={updateNoteTime}
 			/>
 
 			<NoteSelection
