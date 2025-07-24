@@ -1,5 +1,6 @@
 import { INotes } from './interfaces';
 import { generateScrollingNotes, musicJson } from './constants';
+import { interstellarThemeExported } from '../songs/interstellarThemeExported';
 
 export interface Song {
   id: string;
@@ -20,6 +21,7 @@ export const PREDEFINED_SONGS: Song[] = [
     difficulty: 'Medium',
     notes: generateScrollingNotes(musicJson)
   },
+  interstellarThemeExported,
   // Add more predefined songs here
 ];
 
