@@ -26,19 +26,23 @@ export const SongImport: React.FC<SongImportProps> = ({ onImportSong, onError, o
 
 	const convertGameNotesToEditorFormat = (gameNotes: INotes[]): EditorNote[] => {
 		// Group notes by time to handle multiple keys at the same time
-		const notesByTime = new Map<number, string[]>();
+		const notesByTime = new Map<number, { keys: string[]; duration: number }>();
 		
 		gameNotes.forEach((note) => {
 			const time = note.displayAftertimeSeconds;
 			if (!notesByTime.has(time)) {
-				notesByTime.set(time, []);
+				notesByTime.set(time, { keys: [], duration: note.duration || 1 });
 			}
-			notesByTime.get(time)!.push(note.note);
+			notesByTime.get(time)!.keys.push(note.note);
+			// Use the maximum duration if multiple notes at the same time have different durations
+			if (note.duration && note.duration > notesByTime.get(time)!.duration) {
+				notesByTime.get(time)!.duration = note.duration;
+			}
 		});
 
 		// Convert grouped notes to editor format
 		const editorNotes: EditorNote[] = [];
-		notesByTime.forEach((keys, time) => {
+		notesByTime.forEach(({ keys, duration }, time) => {
 			// Use the first key's data for offset and type
 			const primaryKey = keys[0];
 			const noteData = notes[primaryKey as keyof typeof notes];
@@ -46,7 +50,7 @@ export const SongImport: React.FC<SongImportProps> = ({ onImportSong, onError, o
 			editorNotes.push({
 				id: `imported_${time}_${keys.join("_")}`,
 				time: time,
-				duration: 1, // Default duration, user can adjust
+				duration: duration, // Use imported duration instead of hardcoded 1
 				keys: keys,
 				note: primaryKey,
 				offset: noteData?.offset || 0,

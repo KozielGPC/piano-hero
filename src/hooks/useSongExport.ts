@@ -43,6 +43,7 @@ export const useSongExport = ({ onError, onSuccess }: UseSongExportProps): UseSo
 						offset: noteData.offset,
 						type: noteData.type,
 						displayAftertimeSeconds: editorNote.time,
+						duration: editorNote.duration, // Include duration from editor
 					});
 				}
 			});

@@ -16,6 +16,7 @@ export interface INotes {
 	offset: number;
 	type: NoteType;
 	displayAftertimeSeconds: number;
+	duration?: number; // Optional for backward compatibility
 }
 
 // Simple MIDI data interface for uploaded songs

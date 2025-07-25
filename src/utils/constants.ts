@@ -131,6 +131,7 @@ export function generateScrollingNotes(json: IMidiData) {
 				scrollingNotes.push({
 					...mappedNote,
 					displayAftertimeSeconds,
+					duration: note.duration, // Include duration from MIDI note
 				});
 			}
 		});

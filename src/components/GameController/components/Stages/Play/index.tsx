@@ -162,7 +162,7 @@ export const Play = () => {
 			offset: n.offset,
 			type: n.type,
 			time: n.displayAftertimeSeconds,
-			duration: 1,
+			duration: n.duration || 1, // Use actual duration from INotes, fallback to 1
 		} as IFallingNote;
 	});
 
