@@ -9,7 +9,7 @@ import { Play } from "./components/Stages/Play";
 import { Loading } from "./components/Stages/Loading";
 
 const GameController = () => {
-	const { gameState, currentTime, animationRef, actions, prevScoreRef, score } = useGame();
+	const { gameState, currentTime, animationRef, actions, prevScoreRef, score, currentSongAudioUrl } = useGame();
 
 	useEffect(() => {
 		if (score && typeof score === "object") {
@@ -23,12 +23,19 @@ const GameController = () => {
 		}
 	}, [score, prevScoreRef, actions]);
 
-	// Drive time progression while playing
+	// Drive time progression while playing - only when there's no background audio
+	// When there's background audio, the Play component handles time synchronization
 	useEffect(() => {
-		if (gameState !== "PLAYING") {
+		if (gameState !== "PLAYING" || currentSongAudioUrl) {
 			if (animationRef.current) cancelAnimationFrame(animationRef.current);
 			return;
 		}
+		
+		// Only start timing if currentTime is greater than 0 (indicates user has started)
+		if (currentTime <= 0) {
+			return;
+		}
+		
 		const start = performance.now() - currentTime * 1000; // resume support
 		const step = (ts: number) => {
 			actions.setCurrentTime((ts - start) / 1000);
@@ -38,7 +45,7 @@ const GameController = () => {
 		return () => {
 			if (animationRef.current) cancelAnimationFrame(animationRef.current);
 		};
-	}, [gameState, currentTime, actions, animationRef]);
+	}, [gameState, currentTime, actions, animationRef, currentSongAudioUrl]);
 
 	const renderSongEditorState = () => (
 		<SongEditor onBack={() => actions.setGameState("MENU")} onPlaySong={actions.playEditorSong} />
