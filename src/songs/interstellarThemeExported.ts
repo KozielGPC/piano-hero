@@ -12,7 +12,8 @@ export const interstellarThemeExported: Song = {
     note: note.note,
     offset: note.offset,
     type: note.type as NoteType,
-    displayAftertimeSeconds: note.displayAftertimeSeconds
+    displayAftertimeSeconds: note.displayAftertimeSeconds,
+    duration: note.duration
   })),
   audioDuration: interstellarThemeData.audioDuration,
   audioUrl: interstellarThemeData.audioUrl,
