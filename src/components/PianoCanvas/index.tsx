@@ -17,6 +17,7 @@ interface IProps {
 	width?: number;
 	height?: number;
 	hasBackgroundAudio?: boolean; // Whether background song audio is playing
+	isEditorMode?: boolean; // Whether the canvas is being used in the song editor (disables game over detection)
 }
 
 // Drag state interface
@@ -45,6 +46,7 @@ export const InteractivePianoCanvas = ({
 	width = 800,
 	height = CANVAS_HEIGHT_DEFAULT,
 	hasBackgroundAudio = false,
+	isEditorMode = false,
 }: IProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const { actions } = useGame();
@@ -90,7 +92,8 @@ export const InteractivePianoCanvas = ({
 
 	// Game over detection effect
 	useEffect(() => {
-		if (!engineRef.current || currentTime <= 0 || gameOverTriggeredRef.current) return;
+		// Skip game over detection when in editor mode
+		if (isEditorMode || !engineRef.current || currentTime <= 0 || gameOverTriggeredRef.current) return;
 		
 		// Debug: log progress
 		const progress = engineRef.current.getProgress(currentTime);
@@ -124,7 +127,7 @@ export const InteractivePianoCanvas = ({
 				return () => clearTimeout(timeoutId);
 			}
 		}
-	}, [currentTime, actions]);
+	}, [currentTime, actions, isEditorMode]);
 
 	const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
 

@@ -52,6 +52,7 @@ export const InteractiveGamePreview = ({
 						onUpdateNoteDuration={onUpdateNoteDuration}
 						width={800}
 						height={CANVAS_HEIGHT}
+						isEditorMode={true}
 					/>
 				</Paper>
 			</CardContent>
