@@ -86,4 +86,55 @@ export default class RhythmEngine {
 
     return judgement;
   }
+
+  /** 
+   * Check if the game is complete based on current time.
+   * Returns true if all notes have been processed and enough time has passed
+   * for any remaining notes to be considered missed.
+   */
+  isGameComplete(currentTime: number): boolean {
+    if (this.notes.length === 0) return true;
+    
+    // Get the time of the last note
+    const lastNote = this.notes[this.notes.length - 1];
+    const gameEndTime = lastNote.start + 3; // 3 seconds after last note for natural ending
+    
+    return currentTime >= gameEndTime;
+  }
+
+  /** 
+   * Get the total number of notes in the song
+   */
+  getTotalNotes(): number {
+    return this.notes.length;
+  }
+
+  /** 
+   * Get the completion progress as a percentage (0-100)
+   */
+  getProgress(currentTime: number): number {
+    if (this.notes.length === 0) return 100;
+    
+    const lastNote = this.notes[this.notes.length - 1];
+    const totalDuration = lastNote.start + 3; // 3 seconds after last note
+    
+    return Math.min(100, (currentTime / totalDuration) * 100);
+  }
+
+  /** 
+   * Get the time when the game should end (last note + timing window + buffer)
+   */
+  getGameEndTime(): number {
+    if (this.notes.length === 0) return 0;
+    
+    const lastNote = this.notes[this.notes.length - 1];
+    return lastNote.start + 3; // 3 seconds after last note
+  }
+
+  /** 
+   * Check if we're close to the end of the game (useful for triggering end game logic early)
+   */
+  isNearEnd(currentTime: number, threshold: number = 0.9): boolean {
+    return this.getProgress(currentTime) >= threshold * 100;
+  }
 } 

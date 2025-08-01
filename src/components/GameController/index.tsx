@@ -11,6 +11,11 @@ import { Loading } from "./components/Stages/Loading";
 const GameController = () => {
 	const { gameState, currentTime, animationRef, actions, prevScoreRef, score, currentSongAudioUrl } = useGame();
 
+	// Debug: log game state changes
+	useEffect(() => {
+		console.log('GameController - gameState changed to:', gameState);
+	}, [gameState]);
+
 	useEffect(() => {
 		if (score && typeof score === "object") {
 			actions.updateAccuracy(score);

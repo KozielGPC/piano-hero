@@ -141,7 +141,10 @@ const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 	const pauseGame = useCallback(() => setGameState("PAUSED"), []);
 	const resumeGame = useCallback(() => setGameState("PLAYING"), []);
-	const stopGame = useCallback(() => setGameState("ENDED"), []);
+	const stopGame = useCallback(() => {
+		console.log('stopGame called - changing state from', gameState, 'to ENDED');
+		setGameState("ENDED");
+	}, [gameState]);
 
 	const returnToMenu = useCallback(() => {
 		setGameState("MENU");

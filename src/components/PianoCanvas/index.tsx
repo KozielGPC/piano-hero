@@ -61,21 +61,70 @@ export const InteractivePianoCanvas = ({
 
 	// Keep track of which notes were already evaluated to avoid double counting
 	const hitNoteIndexesRef = useRef<Set<number>>(new Set());
+	
+	// Flag to prevent multiple game over triggers
+	const gameOverTriggeredRef = useRef<boolean>(false);
 
 	useEffect(() => {
 		const noteEvents: NoteEvent[] = songNotes.map((n, idx) => ({
 			id: String(idx),
 			keys: [n.note],
-			start: n.time,
+			start: n.time, // This is correct - IFallingNote uses .time property
 		}));
 		engineRef.current = new RhythmEngine(noteEvents);
 		// reset hits tracking
 		hitNoteIndexesRef.current.clear();
+		// reset game over flag when song changes
+		gameOverTriggeredRef.current = false;
+		
+		// Debug: log song info
+		console.log(`Song loaded: ${songNotes.length} notes, last note at ${Math.max(...songNotes.map(n => n.time)).toFixed(2)}s`);
+		if (engineRef.current) {
+			console.log(`Game should end at: ${engineRef.current.getGameEndTime().toFixed(2)}s`);
+		}
 	}, [songNotes]);
 
 	useEffect(() => {
 		currentTimeRef.current = currentTime;
 	}, [currentTime]);
+
+	// Game over detection effect
+	useEffect(() => {
+		if (!engineRef.current || currentTime <= 0 || gameOverTriggeredRef.current) return;
+		
+		// Debug: log progress
+		const progress = engineRef.current.getProgress(currentTime);
+		const gameEndTime = engineRef.current.getGameEndTime();
+		
+		// Multiple conditions for game over to make it more reliable
+		const isGameComplete = engineRef.current.isGameComplete(currentTime);
+		const hasPassedEndTime = currentTime >= gameEndTime;
+		const isVeryNearEnd = progress >= 99; // 99% completion as fallback
+		const isFullyComplete = progress >= 100; // 100% completion for immediate trigger
+		
+		if (isGameComplete || hasPassedEndTime || isVeryNearEnd || isFullyComplete) {
+			console.log('Game over detected!', { 
+				currentTime: currentTime.toFixed(2), 
+				gameEndTime: gameEndTime.toFixed(2), 
+				progress: progress.toFixed(1) + '%'
+			});
+			gameOverTriggeredRef.current = true;
+			
+			// If we're at 100%, trigger immediately
+			if (isFullyComplete) {
+				console.log('100% completion - triggering immediately');
+				actions.stopGame();
+			} else {
+				// Small delay for other conditions
+				const timeoutId = setTimeout(() => {
+					console.log('Game ending after delay');
+					actions.stopGame();
+				}, 200);
+				
+				return () => clearTimeout(timeoutId);
+			}
+		}
+	}, [currentTime, actions]);
 
 	const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
 
