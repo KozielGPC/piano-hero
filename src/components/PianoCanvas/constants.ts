@@ -35,16 +35,21 @@ export const WHITE_KEY_COLOR = "#fff";
 export const BLACK_KEY_COLOR = "#000";
 export const KEY_STROKE_COLOR = "#000";
 export const DEFAULT_AUDIO_HIGHLIGHT_COLOR = "#ffeb3b";
+export const YELLOW_COLOR_JUDGEMENT = "#ffd700";
+export const GREEN_COLOR_JUDGEMENT = "#4caf50";
+export const BLUE_COLOR_JUDGEMENT = "#2196f3";
+export const GRAY_COLOR_JUDGEMENT = "#9e9e9e";
+export const RED_COLOR_JUDGEMENT = "#f44336";
 
 // Drawing dimensions
 export const KEY_STROKE_WIDTH = 1;
 export const NOTE_STROKE_WIDTH = 2;
 
 export const JUDGEMENT_INFO: Record<Judgement, { points: number; text: string; color: string }> = {
-    perfect: { points: 300, text: "Perfect!", color: "#ffd700" },
-    great: { points: 200, text: "Great!", color: "#4caf50" },
-    good: { points: 100, text: "Good", color: "#2196f3" },
-    hit: { points: 50, text: "Hit", color: "#9e9e9e" },
-    miss: { points: 0, text: "Miss", color: "#f44336" },
-    wrongKey: { points: 0, text: "Wrong Key", color: "#f44336" },
+    perfect: { points: 300, text: "Perfect!", color: YELLOW_COLOR_JUDGEMENT },
+    great: { points: 200, text: "Great!", color: GREEN_COLOR_JUDGEMENT },
+    good: { points: 100, text: "Good", color: BLUE_COLOR_JUDGEMENT },
+    hit: { points: 50, text: "Hit", color: GRAY_COLOR_JUDGEMENT },
+    miss: { points: 0, text: "Miss", color: RED_COLOR_JUDGEMENT },
+    wrongKey: { points: 0, text: "Wrong Key", color: RED_COLOR_JUDGEMENT },
 };

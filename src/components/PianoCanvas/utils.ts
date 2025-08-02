@@ -1,4 +1,4 @@
-import RhythmEngine, { Judgement } from "../../engine/RhythmEngine";
+import RhythmEngine from "../../engine/RhythmEngine";
 import { notes, NoteType } from "../../utils/constants";
 import {
 	OFFSET_UNIT,
@@ -204,51 +204,6 @@ export const redrawPianoStrip = (canvas: HTMLCanvasElement | null, activeKeys: A
 };
 
 /**
- * Evaluates whether a key press was a hit, miss, or wrong key and updates the game state
- * @param keyLabel - The label/name of the key that was pressed
- * @param engine - The rhythm engine instance for game logic (can be null)
- * @param currentTime - Current time in the song/game
- * @param activeKeys - Map to store active key states for visual feedback
- * @param incrementWrong - Callback function to increment wrong hit counter
- * @param incrementCorrect - Callback function to increment correct hit counter
- * @param addPoints - Callback function to add points to the score
- */
-export const evaluateNoteHit = (
-	keyLabel: string,
-	engine: RhythmEngine | null,
-	currentTime: number,
-	activeKeys: ActiveKeys,
-	incrementWrong: () => void,
-	incrementCorrect: () => void,
-	addPoints: (points: number) => void,
-) => {
-	if (!engine) return;
-
-	const hitJudgement: Judgement = engine.handleKeyPress(keyLabel, currentTime);
-	const isIncorrectHit = hitJudgement === "miss" || hitJudgement === "wrongKey";
-
-	if (isIncorrectHit) {
-		incrementWrong();
-	} else {
-		incrementCorrect();
-	}
-
-	const judgementInfo = JUDGEMENT_INFO[hitJudgement];
-	const hasPointsToAdd = judgementInfo.points > 0;
-
-	if (hasPointsToAdd) {
-		addPoints(judgementInfo.points);
-	}
-
-	// Highlight this key with verdict color and label
-	activeKeys.set(keyLabel, {
-		expiry: performance.now() + KEY_HIGHLIGHT_MS,
-		color: judgementInfo.color,
-		label: judgementInfo.text,
-	});
-};
-
-/**
  * Evaluates a key press and plays piano audio only for wrong notes
  * @param keyLabel - The label/name of the key that was pressed
  * @param engine - The rhythm engine instance for game logic (can be null)
@@ -318,4 +273,83 @@ export const playNoteAudio = (
 		color: judgementInfo.color,
 		label: judgementInfo.text,
 	});
+};
+
+/**
+ * Converts a Y position to a time value
+ * Used for dragging notes in editor mode
+ * @param y - The Y position to convert
+ * @param height - The height of the canvas
+ * @param currentTime - The current time in the song/game
+ * @returns The time value corresponding to the Y position
+ */
+export const getTimeFromY = (y: number, height: number, currentTime: number): number => {
+	const noteAreaHeight = height - PIANO_HEIGHT;
+	const fallAreaHeight = noteAreaHeight - NOTE_AREA_BOTTOM_PADDING;
+	const fallProgress = (y - NOTE_AREA_TOP_PADDING) / fallAreaHeight;
+	const timeUntilNote = LOOKAHEAD_TIME - fallProgress * LOOKAHEAD_TIME;
+	return currentTime + timeUntilNote;
+};
+
+/**
+ * Finds the note at a given position on the canvas
+ * @param x - The X position to check
+ * @param y - The Y position to check
+ * @param songNotes - The array of falling notes
+ * @param currentTime - The current time in the song/game
+ * @param height - The height of the canvas
+ * @param width - The width of the canvas
+ * @returns The note at the position, or null if no note is found
+ */
+export const findNoteAtPosition = (
+	x: number,
+	y: number,
+	songNotes: IFallingNote[],
+	currentTime: number,
+	height: number,
+	width: number,
+): { noteIndex: number; area: "bottom" | "center" } | null => {
+	const noteAreaHeight = height - PIANO_HEIGHT;
+
+	// Check if click is in the falling notes area
+	if (y >= noteAreaHeight) return null;
+
+	for (let i = 0; i < songNotes.length; i++) {
+		const note = songNotes[i];
+		const noteStartTime = note.time;
+		const noteEndTime = note.time + (note.duration || 1);
+		const noteIsVisible = currentTime >= noteStartTime - LOOKAHEAD_TIME && currentTime <= noteEndTime + 1;
+
+		if (!noteIsVisible) continue;
+
+		const timeUntilNote = noteStartTime - currentTime;
+		const fallProgress = (LOOKAHEAD_TIME - timeUntilNote) / LOOKAHEAD_TIME;
+		const fallAreaHeight = noteAreaHeight - NOTE_AREA_BOTTOM_PADDING;
+		const noteCenterY = fallProgress * fallAreaHeight + NOTE_AREA_TOP_PADDING;
+		const noteHeight = Math.max(MINIMUM_NOTE_HEIGHT, (note.duration || 1) * NOTE_HEIGHT_MULTIPLIER);
+
+		const noteData = notes[note.note as keyof typeof notes];
+		if (!noteData) continue;
+
+		const noteCenterX = getKeyCenterX(noteData.offset, width / 2);
+		const noteWidth = noteData.type === NoteType.black ? BLACK_KEY_WIDTH : WHITE_KEY_WIDTH;
+
+		const noteLeft = noteCenterX - noteWidth / 2;
+		const noteRight = noteCenterX + noteWidth / 2;
+		const noteTop = noteCenterY;
+		const noteBottom = noteCenterY + noteHeight;
+
+		// Check if click is within note bounds
+		if (x >= noteLeft && x <= noteRight && y >= noteTop && y <= noteBottom) {
+			const resizeHandleSize = 8; // 8px resize handle area
+
+			// Determine which area was clicked (only bottom edge and center)
+			if (y >= noteBottom - resizeHandleSize) {
+				return { noteIndex: i, area: "bottom" };
+			} else {
+				return { noteIndex: i, area: "center" };
+			}
+		}
+	}
+	return null;
 };
