@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
-import RhythmEngine, { NoteEvent } from "../../engine/RhythmEngine";
+import RhythmEngine from "../../engine/RhythmEngine";
+import { NoteEvent } from "../../engine/types";
 import { useGame } from "../../context/GameContext";
 import { notes } from "../../utils/constants";
 import {
@@ -116,14 +117,18 @@ export const InteractivePianoCanvas = ({
 		// Debug: log progress
 		const progress = engineRef.current.getProgress(currentTime);
 		const gameEndTime = engineRef.current.getGameEndTime();
-
-		// Multiple conditions for game over to make it more reliable
-		const isGameComplete = engineRef.current.isGameComplete(currentTime);
-		const hasPassedEndTime = currentTime >= gameEndTime;
-		const isVeryNearEnd = progress >= 99; // 99% completion as fallback
 		const isFullyComplete = progress >= 100; // 100% completion for immediate trigger
 
-		if (isGameComplete || hasPassedEndTime || isVeryNearEnd || isFullyComplete) {
+		const shouldGameOver = (engine: RhythmEngine, currentTime: number, gameEndTime: number) => {
+			// Multiple conditions for game over to make it more reliable
+			const isGameComplete = engine.isGameComplete(currentTime);
+			const hasPassedEndTime = currentTime >= gameEndTime;
+			const isVeryNearEnd = engine.isNearEnd(currentTime, 0.9);
+
+			return isGameComplete || hasPassedEndTime || isVeryNearEnd || isFullyComplete;
+		};
+
+		if (shouldGameOver(engineRef.current, currentTime, gameEndTime)) {
 			console.log("Game over detected!", {
 				currentTime: currentTime.toFixed(2),
 				gameEndTime: gameEndTime.toFixed(2),

@@ -1,4 +1,4 @@
-import { Judgement } from "../../engine/RhythmEngine";
+import { Judgement } from "../../engine/types";
 
 // Canvas constants
 export const CANVAS_HEIGHT_DEFAULT = 400;

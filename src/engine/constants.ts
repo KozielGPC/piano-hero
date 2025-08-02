@@ -1,0 +1,1 @@
+export const GAME_END_TIME = 3; // 3 seconds after last note for fade out
