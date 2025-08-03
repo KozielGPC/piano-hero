@@ -3,7 +3,6 @@ import { Box, Typography, IconButton, Alert } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { notes } from "../../utils/constants";
 import { IFallingNote } from "../PianoCanvas/types";
-import { INotes } from "../../utils/interfaces";
 import { SongData } from "./types";
 import { SongInformation } from "./components/SongInformation";
 import { NotesList } from "./components/NotesList";
@@ -14,23 +13,19 @@ import { InteractiveGamePreview } from "./components/InteractiveGamePreview";
 import { AudioUpload } from "./components/AudioUpload";
 import { SongImport } from "./components/SongImport";
 import { useSongFileHandler } from "../../hooks/useSongFileHandler";
-import { useSongExport } from "../../hooks/useSongExport";
 import { useSongEditor } from "../../context/SongEditorContext";
 
 interface SongEditorProps {
 	onBack: () => void;
-	onPlaySong: (songData: INotes[], audioUrl?: string) => void;
 }
 
-const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
+const SongEditor: React.FC<SongEditorProps> = ({ onBack }) => {
 	const {
 		songData,
 		selectedNotes,
 		error,
 		success,
-		editingNote,
-		editDialogOpen,
-		actions: { deleteNote, setError, setSuccess, setSongData, setEditingNote, setEditDialogOpen },
+		actions: { setError, setSuccess, setSongData },
 	} = useSongEditor();
 
 	const {
@@ -41,16 +36,6 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 		waveformRef,
 		actions: { handleFileUpload, togglePlayback, stopPlayback, skipTime, loadImportedAudioFile },
 	} = useSongFileHandler({
-		onError: (errorMessage: string) => {
-			setError(errorMessage);
-		},
-		onSuccess: (successMessage: string) => {
-			setSuccess(successMessage);
-			setTimeout(() => setSuccess(""), 3000);
-		},
-	});
-
-	const { exportSong, playSong } = useSongExport({
 		onError: (errorMessage: string) => {
 			setError(errorMessage);
 		},
@@ -120,7 +105,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 
 			<SongImport onImportSong={handleImportSong} onError={setError} onSuccess={setSuccess} />
 
-			<SongInformation songData={songData} setSongData={setSongData} />
+			<SongInformation />
 
 			<AudioUpload
 				songData={songData}
@@ -141,22 +126,11 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 
 			<NoteSelection />
 
-			<NotesList
-				songData={songData}
-				setEditingNote={setEditingNote}
-				setEditDialogOpen={setEditDialogOpen}
-				deleteNote={deleteNote}
-			/>
+			<NotesList />
 
-			<ExportControls songData={songData} exportSong={exportSong} playSong={playSong} onPlaySong={onPlaySong} />
+			<ExportControls />
 
-			<EditNoteDialog
-				editDialogOpen={editDialogOpen}
-				setEditDialogOpen={setEditDialogOpen}
-				editingNote={editingNote}
-				setEditingNote={setEditingNote}
-				setSongData={setSongData}
-			/>
+			<EditNoteDialog />
 		</Box>
 	);
 };

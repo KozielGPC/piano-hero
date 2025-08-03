@@ -85,14 +85,6 @@ export default class RhythmEngine {
 	}
 
 	/**
-	 * Get the total number of notes in the song
-	 * @returns The total number of notes in the song
-	 */
-	getTotalNotes(): number {
-		return this.notes.length;
-	}
-
-	/**
 	 * Get the completion progress as a percentage (0-100)
 	 * @param currentTime - The current time in the song/game
 	 * @returns The completion progress as a percentage (0-100)

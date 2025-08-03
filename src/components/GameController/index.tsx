@@ -13,7 +13,7 @@ const GameController = () => {
 
 	// Debug: log game state changes
 	useEffect(() => {
-		console.log('GameController - gameState changed to:', gameState);
+		console.log("GameController - gameState changed to:", gameState);
 	}, [gameState]);
 
 	useEffect(() => {
@@ -35,12 +35,12 @@ const GameController = () => {
 			if (animationRef.current) cancelAnimationFrame(animationRef.current);
 			return;
 		}
-		
+
 		// Only start timing if currentTime is greater than 0 (indicates user has started)
 		if (currentTime <= 0) {
 			return;
 		}
-		
+
 		const start = performance.now() - currentTime * 1000; // resume support
 		const step = (ts: number) => {
 			actions.setCurrentTime((ts - start) / 1000);
@@ -52,9 +52,7 @@ const GameController = () => {
 		};
 	}, [gameState, currentTime, actions, animationRef, currentSongAudioUrl]);
 
-	const renderSongEditorState = () => (
-		<SongEditor onBack={() => actions.setGameState("MENU")} onPlaySong={actions.playEditorSong} />
-	);
+	const renderSongEditorState = () => <SongEditor onBack={() => actions.setGameState("MENU")} />;
 
 	return (
 		<Box

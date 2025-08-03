@@ -1,17 +1,30 @@
 import { Card, CardContent, Typography, Stack, Button } from "@mui/material";
 import { GetApp, PlayArrow } from "@mui/icons-material";
 import { useState } from "react";
-import { SongData } from "../../types";
-import { INotes } from "../../../../utils/interfaces";
+import { useSongExport } from "../../../../hooks/useSongExport";
+import { useSongEditor } from "../../../../context/SongEditorContext";
+import { useGame } from "../../../../context/GameContext";
 
-interface ExportControlsProps {
-	songData: SongData;
-	exportSong: (songData: SongData) => Promise<void>;
-	playSong: (songData: SongData, onPlaySong: (gameNotes: INotes[], audioUrl?: string) => void) => void;
-	onPlaySong: (gameNotes: INotes[], audioUrl?: string) => void;
-}
+export const ExportControls = () => {
+	const {
+		songData,
+		actions: { setError, setSuccess },
+	} = useSongEditor();
 
-export const ExportControls = ({ songData, exportSong, playSong, onPlaySong }: ExportControlsProps) => {
+	const { exportSong, playSong } = useSongExport({
+		onError: (errorMessage: string) => {
+			setError(errorMessage);
+		},
+		onSuccess: (successMessage: string) => {
+			setSuccess(successMessage);
+			setTimeout(() => setSuccess(""), 3000);
+		},
+	});
+
+	const {
+		actions: { playEditorSong },
+	} = useGame();
+
 	const [isExporting, setIsExporting] = useState(false);
 
 	const handleExport = async () => {
@@ -33,15 +46,17 @@ export const ExportControls = ({ songData, exportSong, playSong, onPlaySong }: E
 						variant="contained"
 						startIcon={<GetApp />}
 						onClick={handleExport}
-						disabled={!songData.name.trim() || songData.notes.length === 0 || !songData.audioFile || isExporting}
+						disabled={
+							!songData.name.trim() || songData.notes.length === 0 || !songData.audioFile || isExporting
+						}
 					>
-						{isExporting ? 'Exporting...' : 'Export Song with Audio'}
+						{isExporting ? "Exporting..." : "Export Song with Audio"}
 					</Button>
 					<Button
 						variant="contained"
 						color="secondary"
 						startIcon={<PlayArrow />}
-						onClick={() => playSong(songData, onPlaySong)}
+						onClick={() => playSong(songData, playEditorSong)}
 						disabled={!songData.name.trim() || songData.notes.length === 0}
 					>
 						Play Song

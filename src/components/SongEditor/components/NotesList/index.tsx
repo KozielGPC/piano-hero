@@ -1,18 +1,24 @@
 import { Delete, Edit } from "@mui/icons-material";
-import { Card, CardContent, Divider, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
-import { SongData } from "../../types";
-import { EditorNote } from "../../types";
+import {
+	Card,
+	CardContent,
+	Divider,
+	IconButton,
+	List,
+	ListItem,
+	ListItemSecondaryAction,
+	ListItemText,
+	Typography,
+} from "@mui/material";
 import { formatTime } from "../../utils";
 import React from "react";
+import { useSongEditor } from "../../../../context/SongEditorContext";
 
-interface NotesListProps {
-	songData: SongData;
-	setEditingNote: (note: EditorNote) => void;
-	setEditDialogOpen: (open: boolean) => void;
-	deleteNote: (noteId: string) => void;
-}
-
-export const NotesList = ({ songData, setEditingNote, setEditDialogOpen, deleteNote }: NotesListProps) => {
+export const NotesList = () => {
+	const {
+		songData,
+		actions: { setEditingNote, setEditDialogOpen, deleteNote },
+	} = useSongEditor();
 	return (
 		<Card elevation={3} sx={{ mb: 3 }}>
 			<CardContent>
