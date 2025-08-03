@@ -3,6 +3,7 @@ import GameController from "./components/GameController";
 import { GameArea } from "./components/GameArea";
 import { Header } from "./components/Header";
 import { GameProvider } from "./context/GameContext";
+import { SongEditorProvider } from "./context/SongEditorContext";
 
 export const Home = () => {
 	return (
@@ -25,7 +26,9 @@ export const Home = () => {
 
 				<GameArea>
 					<GameProvider>
-						<GameController />
+						<SongEditorProvider>
+							<GameController />
+						</SongEditorProvider>
 					</GameProvider>
 				</GameArea>
 			</Container>

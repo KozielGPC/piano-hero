@@ -353,3 +353,44 @@ export const findNoteAtPosition = (
 	}
 	return null;
 };
+
+/**
+ * Converts mouse coordinates to canvas coordinates
+ * @param e - The mouse event
+ * @returns The scaled coordinates
+ */
+export const getScaledCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
+	const canvas = e.currentTarget;
+	const rect = canvas.getBoundingClientRect();
+
+	// Calculate scaling factors
+	const scaleX = canvas.width / rect.width;
+	const scaleY = canvas.height / rect.height;
+
+	// Get mouse position relative to canvas and scale it
+	const x = (e.clientX - rect.left) * scaleX;
+	const y = (e.clientY - rect.top) * scaleY;
+
+	return { x, y };
+};
+
+/**
+ * Finds the nearest key to a given X position
+ * @param x - The X position to check
+ * @param width - The width of the canvas
+ * @returns The nearest key and the minimum distance
+ */
+export const findNearestKeyAndMinDistance = (x: number, width: number) => {
+	let nearest: string | null = null;
+	let min = Infinity;
+	Object.keys(notes).forEach((k) => {
+		const cx = getKeyCenterX(notes[k as keyof typeof notes].offset, width / 2);
+		const d = Math.abs(cx - x);
+		if (d < min) {
+			min = d;
+			nearest = k;
+		}
+	});
+
+	return { nearest, min };
+};

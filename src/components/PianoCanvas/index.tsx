@@ -10,17 +10,22 @@ import {
 	LOOKAHEAD_TIME,
 	NOTE_AREA_BOTTOM_PADDING,
 } from "./constants";
-import { drawCanvas, getKeyCenterX, playNoteAudio, redrawPianoStrip, getTimeFromY, findNoteAtPosition } from "./utils";
+import {
+	drawCanvas,
+	playNoteAudio,
+	redrawPianoStrip,
+	getTimeFromY,
+	findNoteAtPosition,
+	getScaledCoordinates,
+	findNearestKeyAndMinDistance,
+} from "./utils";
 import { ActiveKeys, DragState, IFallingNote } from "./types";
+import { useSongEditor } from "../../context/SongEditorContext";
 
 interface IProps {
 	notes: IFallingNote[];
 	currentTime: number;
 	selectedNotes?: string[];
-	onAddNote?: () => void;
-	onAddNoteAtKey?: (key: string, time: number) => void;
-	onUpdateNoteTime?: (noteIndex: number, newTime: number) => void;
-	onUpdateNoteDuration?: (noteIndex: number, newDuration: number) => void;
 	width?: number;
 	height?: number;
 	hasBackgroundAudio?: boolean;
@@ -34,10 +39,6 @@ const activeKeys: ActiveKeys = new Map();
  * @param notes - Falling notes
  * @param currentTime - Current time
  * @param selectedNotes - Selected notes. If provided, click on falling area will invoke onAddNote
- * @param onAddNote - Callback for adding note
- * @param onAddNoteAtKey - Callback for adding note at specific key and time
- * @param onUpdateNoteTime - Callback for updating note timing
- * @param onUpdateNoteDuration - Callback for updating note duration
  * @param width - Width of the canvas
  * @param height - Height of the canvas
  * @param hasBackgroundAudio - Whether background song audio is playing
@@ -47,10 +48,6 @@ export const InteractivePianoCanvas = ({
 	notes: songNotes,
 	currentTime,
 	selectedNotes = [],
-	onAddNote,
-	onAddNoteAtKey,
-	onUpdateNoteTime,
-	onUpdateNoteDuration,
 	width = 800,
 	height = CANVAS_HEIGHT_DEFAULT,
 	hasBackgroundAudio = false,
@@ -63,6 +60,7 @@ export const InteractivePianoCanvas = ({
 	const gameOverTriggeredRef = useRef<boolean>(false);
 
 	const { actions } = useGame();
+	const { actions: songEditorActions } = useSongEditor();
 
 	const [dragState, setDragState] = useState<DragState | null>(null);
 	const [hoverCursor, setHoverCursor] = useState<string>("default");
@@ -86,18 +84,27 @@ export const InteractivePianoCanvas = ({
 		currentTimeRef.current = currentTime;
 	}, [currentTime]);
 
-	// Game over detection effect
+	// Game over detection
 	useEffect(() => {
-		// Skip game over detection when in editor mode
 		if (isEditorMode || !engineRef.current || currentTime <= 0 || gameOverTriggeredRef.current) return;
 
-		// Debug: log progress
-		const progress = engineRef.current.getProgress(currentTime);
-		const gameEndTime = engineRef.current.getGameEndTime();
-		const isFullyComplete = progress >= 100; // 100% completion for immediate trigger
+		const getProgressState = (engine: RhythmEngine, currentTime: number) => {
+			if (!engine) return { gameEndTime: 0, isFullyComplete: false };
 
-		const shouldGameOver = (engine: RhythmEngine, currentTime: number, gameEndTime: number) => {
-			// Multiple conditions for game over to make it more reliable
+			const gameEndTime = engine.getGameEndTime();
+			const isFullyComplete = engine.isGameComplete(currentTime);
+
+			return { gameEndTime, isFullyComplete };
+		};
+
+		const { gameEndTime, isFullyComplete } = getProgressState(engineRef.current, currentTimeRef.current);
+
+		const shouldGameOver = (
+			engine: RhythmEngine,
+			currentTime: number,
+			gameEndTime: number,
+			isFullyComplete: boolean,
+		) => {
 			const isGameComplete = engine.isGameComplete(currentTime);
 			const hasPassedEndTime = currentTime >= gameEndTime;
 			const isVeryNearEnd = engine.isNearEnd(currentTime, 0.9);
@@ -105,22 +112,13 @@ export const InteractivePianoCanvas = ({
 			return isGameComplete || hasPassedEndTime || isVeryNearEnd || isFullyComplete;
 		};
 
-		if (shouldGameOver(engineRef.current, currentTime, gameEndTime)) {
-			console.log("Game over detected!", {
-				currentTime: currentTime.toFixed(2),
-				gameEndTime: gameEndTime.toFixed(2),
-				progress: progress.toFixed(1) + "%",
-			});
+		if (shouldGameOver(engineRef.current, currentTime, gameEndTime, isFullyComplete)) {
 			gameOverTriggeredRef.current = true;
 
-			// If we're at 100%, trigger immediately
 			if (isFullyComplete) {
-				console.log("100% completion - triggering immediately");
 				actions.stopGame();
 			} else {
-				// Small delay for other conditions
 				const timeoutId = setTimeout(() => {
-					console.log("Game ending after delay");
 					actions.stopGame();
 				}, 200);
 
@@ -197,21 +195,6 @@ export const InteractivePianoCanvas = ({
 		return () => window.removeEventListener("keydown", down);
 	}, [actions]);
 
-	const getScaledCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
-		const canvas = e.currentTarget;
-		const rect = canvas.getBoundingClientRect();
-
-		// Calculate scaling factors
-		const scaleX = canvas.width / rect.width;
-		const scaleY = canvas.height / rect.height;
-
-		// Get mouse position relative to canvas and scale it
-		const x = (e.clientX - rect.left) * scaleX;
-		const y = (e.clientY - rect.top) * scaleY;
-
-		return { x, y };
-	};
-
 	const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		const { x, y } = getScaledCoordinates(e);
 
@@ -220,11 +203,13 @@ export const InteractivePianoCanvas = ({
 
 		// Check if we clicked on a note
 		const noteResult = findNoteAtPosition(x, y, songNotes, currentTime, height, width);
-		if (noteResult && (onUpdateNoteTime || onUpdateNoteDuration)) {
+		// if (noteResult && (songEditorActions.updateNoteTime || songEditorActions.updateNoteDuration)) {
+		if (noteResult) {
 			const { noteIndex, area } = noteResult;
 
 			let dragMode: "timing" | "duration-bottom";
-			if (area === "bottom" && onUpdateNoteDuration) {
+			// if (area === "bottom" && songEditorActions.updateNoteDuration) {
+			if (area === "bottom") {
 				dragMode = "duration-bottom";
 			} else {
 				dragMode = "timing";
@@ -264,7 +249,8 @@ export const InteractivePianoCanvas = ({
 		} else {
 			// Update cursor based on hover position when not dragging
 			const noteResult = findNoteAtPosition(x, y, songNotes, currentTime, height, width);
-			if (noteResult && onUpdateNoteDuration) {
+			if (noteResult) {
+			// if (noteResult && songEditorActions.updateNoteDuration) {
 				const { area } = noteResult;
 				if (area === "bottom") {
 					setHoverCursor("ns-resize"); // North-south resize cursor
@@ -285,15 +271,15 @@ export const InteractivePianoCanvas = ({
 		// Prevent default to avoid any unwanted browser behavior
 		if (e) e.preventDefault();
 
-		if (dragState.dragMode === "timing" && onUpdateNoteTime) {
+		if (dragState.dragMode === "timing" && songEditorActions.updateNoteTime) {
 			const newTime = getTimeFromY(dragState.currentY, height, currentTime);
-			onUpdateNoteTime(dragState.noteIndex, Math.max(0, newTime));
-		} else if (dragState.dragMode === "duration-bottom" && onUpdateNoteDuration) {
+			songEditorActions.updateNoteTime(dragState.noteIndex, Math.max(0, newTime), songNotes);
+		} else if (dragState.dragMode === "duration-bottom" && songEditorActions.updateNoteDuration) {
 			// For bottom handle, adjust duration based on how far we dragged
 			const deltaY = dragState.currentY - dragState.startY;
 			const deltaTime = (deltaY / (height - PIANO_HEIGHT - NOTE_AREA_BOTTOM_PADDING)) * LOOKAHEAD_TIME;
 			const newDuration = Math.max(0.1, (dragState.originalDuration || 1) + deltaTime);
-			onUpdateNoteDuration(dragState.noteIndex, newDuration);
+			songEditorActions.updateNoteDuration(dragState.noteIndex, newDuration, songNotes);
 		}
 
 		setDragState(null);
@@ -302,44 +288,28 @@ export const InteractivePianoCanvas = ({
 	const onCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		if (dragState?.isDragging) return; // Don't process clicks during drag
 
-		// Prevent default to avoid any unwanted browser behavior
 		e.preventDefault();
 
-		const { x, y } = getScaledCoordinates(e);
-		if (y < height - PIANO_HEIGHT) {
-			// Click in falling notes area
-			if (selectedNotes.length && onAddNote) onAddNote();
-		} else {
-			// Click on piano keys
-			let nearest: string | null = null;
-			let min = Infinity;
-			Object.keys(notes).forEach((k) => {
-				const cx = getKeyCenterX(notes[k as keyof typeof notes].offset, width / 2);
-				const d = Math.abs(cx - x);
-				if (d < min) {
-					min = d;
-					nearest = k;
-				}
-			});
+		const { x } = getScaledCoordinates(e);
+		const { nearest, min } = findNearestKeyAndMinDistance(x, width);
 
-			if (nearest && min <= WHITE_KEY_WIDTH / 2) {
-				// Add note at this key and current time if callback is provided
-				if (onAddNoteAtKey) {
-					onAddNoteAtKey(nearest, currentTimeRef.current);
-				} else {
-					// Fallback to just playing audio (original behavior)
-					playNoteAudio(
-						nearest,
-						engineRef.current,
-						currentTimeRef.current,
-						activeKeys,
-						actions.incrementWrong,
-						actions.incrementCorrect,
-						actions.addPoints,
-						audioCache,
-						hasBackgroundAudio,
-					);
-				}
+		if (nearest && min <= WHITE_KEY_WIDTH / 2) {
+			// Song Editor mode - Add new key at current time
+			if (songEditorActions.addNoteAtKey) {
+				songEditorActions.addNoteAtKey(nearest, currentTimeRef.current);
+			} else {
+				// Play Mode - Fallback to just playing audio
+				playNoteAudio(
+					nearest,
+					engineRef.current,
+					currentTimeRef.current,
+					activeKeys,
+					actions.incrementWrong,
+					actions.incrementCorrect,
+					actions.addPoints,
+					audioCache,
+					hasBackgroundAudio,
+				);
 			}
 		}
 	};
@@ -353,15 +323,15 @@ export const InteractivePianoCanvas = ({
 				width: "100%",
 				height: "auto",
 				cursor: dragState?.isDragging ? "grabbing" : hoverCursor,
-				userSelect: "none", // Prevent text selection during dragging
-				touchAction: "none", // Prevent touch scrolling on mobile
+				userSelect: "none",
+				touchAction: "none",
 			}}
 			onMouseDown={onMouseDown}
 			onMouseMove={onMouseMove}
 			onMouseUp={onMouseUp}
 			onMouseLeave={(e) => {
 				e.preventDefault();
-				setDragState(null); // Cancel drag if mouse leaves canvas
+				setDragState(null);
 			}}
 		/>
 	);

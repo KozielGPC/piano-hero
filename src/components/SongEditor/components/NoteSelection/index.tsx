@@ -1,22 +1,16 @@
 import { Add } from "@mui/icons-material";
 import { Card, CardContent, Typography, Box, Stack, Chip, Grid, TextField, Button } from "@mui/material";
 import { notes } from "../../../../utils/constants";
+import { useSongEditor } from "../../../../context/SongEditorContext";
+import { useGame } from "../../../../context/GameContext";
 
-interface NoteSelectionProps {
-	selectedNotes: string[];
-	setSelectedNotes: React.Dispatch<React.SetStateAction<string[]>>;
-	noteDuration: number;
-	setNoteDuration: React.Dispatch<React.SetStateAction<number>>;
-	addNote: () => void;
-}
-
-export const NoteSelection = ({
-	selectedNotes,
-	setSelectedNotes,
-	noteDuration,
-	setNoteDuration,
-	addNote,
-}: NoteSelectionProps) => {
+export const NoteSelection = () => {
+	const {
+		selectedNotes,
+		noteDuration,
+		actions: { setSelectedNotes, setNoteDuration, addNote },
+	} = useSongEditor();
+	const { currentTime } = useGame();
 	const noteOptions = Object.entries(notes).map(([key, noteData]) => ({
 		key,
 		label: `${key} (${noteData.note})`,
@@ -66,7 +60,7 @@ export const NoteSelection = ({
 						<Button
 							variant="contained"
 							startIcon={<Add />}
-							onClick={() => addNote()}
+							onClick={() => addNote(currentTime)}
 							disabled={selectedNotes.length === 0}
 							fullWidth
 						>

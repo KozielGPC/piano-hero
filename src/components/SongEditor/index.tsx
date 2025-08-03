@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Box, Typography, IconButton, Alert } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import { notes, NoteType } from "../../utils/constants";
+import { notes } from "../../utils/constants";
 import { IFallingNote } from "../PianoCanvas/types";
 import { INotes } from "../../utils/interfaces";
-import { EditorNote, SongData } from "./types";
+import { SongData } from "./types";
 import { SongInformation } from "./components/SongInformation";
 import { NotesList } from "./components/NotesList";
 import { ExportControls } from "./components/ExportControls";
@@ -15,6 +15,7 @@ import { AudioUpload } from "./components/AudioUpload";
 import { SongImport } from "./components/SongImport";
 import { useSongFileHandler } from "../../hooks/useSongFileHandler";
 import { useSongExport } from "../../hooks/useSongExport";
+import { useSongEditor } from "../../context/SongEditorContext";
 
 interface SongEditorProps {
 	onBack: () => void;
@@ -22,19 +23,15 @@ interface SongEditorProps {
 }
 
 const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
-	const [songData, setSongData] = useState<SongData>({
-		name: "",
-		artist: "",
-		audioFile: null,
-		duration: 0,
-		notes: [],
-	});
-	const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
-	const [error, setError] = useState<string>("");
-	const [success, setSuccess] = useState<string>("");
-	const [editingNote, setEditingNote] = useState<EditorNote | null>(null);
-	const [editDialogOpen, setEditDialogOpen] = useState(false);
-	const [noteDuration, setNoteDuration] = useState(1);
+	const {
+		songData,
+		selectedNotes,
+		error,
+		success,
+		editingNote,
+		editDialogOpen,
+		actions: { deleteNote, setError, setSuccess, setSongData, setEditingNote, setEditDialogOpen },
+	} = useSongEditor();
 
 	const {
 		currentTime,
@@ -74,7 +71,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 	// Handle imported song data
 	const handleImportSong = (importedSongData: SongData) => {
 		setSongData(importedSongData);
-		
+
 		// If there's an audio file, load it properly with WaveSurfer initialization
 		if (importedSongData.audioFile && importedSongData.duration) {
 			loadImportedAudioFile(importedSongData.audioFile, importedSongData.duration);
@@ -97,120 +94,6 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 			}),
 		)
 		.filter(Boolean) as IFallingNote[];
-
-	const addNote = (time?: number) => {
-		if (selectedNotes.length === 0) {
-			setError("Please select at least one note to add");
-			return;
-		}
-
-		const noteTime = time !== undefined ? time : currentTime;
-		const newNote: EditorNote = {
-			id: Date.now().toString(),
-			time: noteTime,
-			duration: noteDuration,
-			keys: selectedNotes,
-			note: selectedNotes[0], // Use first selected note as primary
-			offset: notes[selectedNotes[0] as keyof typeof notes]?.offset || 0,
-			type: notes[selectedNotes[0] as keyof typeof notes]?.type || NoteType.white,
-		};
-
-		setSongData((prev) => ({
-			...prev,
-			notes: [...prev.notes, newNote].sort((a, b) => a.time - b.time),
-		}));
-
-		setSuccess(`Note added at ${noteTime.toFixed(2)}s`);
-		setTimeout(() => setSuccess(""), 2000);
-	};
-
-	const addNoteAtKey = (key: string, time: number) => {
-		const noteData = notes[key as keyof typeof notes];
-		if (!noteData) {
-			setError(`Invalid note key: ${key}`);
-			return;
-		}
-
-		const newNote: EditorNote = {
-			id: Date.now().toString(),
-			time: time,
-			duration: noteDuration,
-			keys: [key],
-			note: key,
-			offset: noteData.offset,
-			type: noteData.type,
-		};
-
-		setSongData((prev) => ({
-			...prev,
-			notes: [...prev.notes, newNote].sort((a, b) => a.time - b.time),
-		}));
-	};
-
-	const deleteNote = (noteId: string) => {
-		setSongData((prev) => ({
-			...prev,
-			notes: prev.notes.filter((note) => note.id !== noteId),
-		}));
-	};
-
-	const updateNoteTime = (noteIndex: number, newTime: number) => {
-		const fallingNoteIndex = noteIndex;
-		if (fallingNoteIndex < 0 || fallingNoteIndex >= fallingNotes.length) return;
-
-		// Find the corresponding editor note
-		const fallingNote = fallingNotes[fallingNoteIndex];
-		const editorNoteIndex = songData.notes.findIndex(note => 
-			note.time === fallingNote.time && 
-			note.keys.includes(fallingNote.note)
-		);
-
-		if (editorNoteIndex === -1) return;
-
-		setSongData((prev) => {
-			const newNotes = [...prev.notes];
-			newNotes[editorNoteIndex] = {
-				...newNotes[editorNoteIndex],
-				time: newTime
-			};
-			// Sort notes by time after updating
-			newNotes.sort((a, b) => a.time - b.time);
-			return {
-				...prev,
-				notes: newNotes,
-			};
-		});
-
-		// No success message for drag operations - visual feedback is sufficient
-	};
-
-	const updateNoteDuration = (noteIndex: number, newDuration: number) => {
-		const fallingNoteIndex = noteIndex;
-		if (fallingNoteIndex < 0 || fallingNoteIndex >= fallingNotes.length) return;
-
-		// Find the corresponding editor note
-		const fallingNote = fallingNotes[fallingNoteIndex];
-		const editorNoteIndex = songData.notes.findIndex(note => 
-			note.time === fallingNote.time && 
-			note.keys.includes(fallingNote.note)
-		);
-
-		if (editorNoteIndex === -1) return;
-
-		setSongData((prev) => {
-			const newNotes = [...prev.notes];
-			newNotes[editorNoteIndex] = {
-				...newNotes[editorNoteIndex],
-				duration: newDuration
-			};
-			return {
-				...prev,
-				notes: newNotes,
-			};
-		});
-
-		// No success message for drag operations - visual feedback is sufficient
-	};
 
 	return (
 		<Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
@@ -235,11 +118,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				</Alert>
 			)}
 
-			<SongImport
-				onImportSong={handleImportSong}
-				onError={setError}
-				onSuccess={setSuccess}
-			/>
+			<SongImport onImportSong={handleImportSong} onError={setError} onSuccess={setSuccess} />
 
 			<SongInformation songData={songData} setSongData={setSongData} />
 
@@ -258,19 +137,9 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack, onPlaySong }) => {
 				fallingNotes={fallingNotes}
 				currentTime={currentTime}
 				selectedNotes={selectedNotes}
-				addNote={addNote}
-				onAddNoteAtKey={addNoteAtKey}
-				onUpdateNoteTime={updateNoteTime}
-				onUpdateNoteDuration={updateNoteDuration}
 			/>
 
-			<NoteSelection
-				selectedNotes={selectedNotes}
-				setSelectedNotes={setSelectedNotes}
-				noteDuration={noteDuration}
-				setNoteDuration={setNoteDuration}
-				addNote={addNote}
-			/>
+			<NoteSelection />
 
 			<NotesList
 				songData={songData}
