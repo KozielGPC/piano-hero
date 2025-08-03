@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import RhythmEngine from "../../engine/RhythmEngine";
 import { NoteEvent } from "../../engine/types";
 import { useGame } from "../../context/GameContext";
@@ -11,7 +11,7 @@ import {
 	NOTE_AREA_BOTTOM_PADDING,
 } from "./constants";
 import { drawCanvas, getKeyCenterX, playNoteAudio, redrawPianoStrip, getTimeFromY, findNoteAtPosition } from "./utils";
-import { ActiveKeys, IFallingNote } from "./types";
+import { ActiveKeys, DragState, IFallingNote } from "./types";
 
 interface IProps {
 	notes: IFallingNote[];
@@ -25,16 +25,6 @@ interface IProps {
 	height?: number;
 	hasBackgroundAudio?: boolean;
 	isEditorMode?: boolean;
-}
-
-interface DragState {
-	isDragging: boolean;
-	noteIndex: number;
-	startY: number;
-	startTime: number;
-	currentY: number;
-	dragMode: "timing" | "duration-bottom";
-	originalDuration?: number;
 }
 
 const activeKeys: ActiveKeys = new Map();
@@ -67,43 +57,30 @@ export const InteractivePianoCanvas = ({
 	isEditorMode = false,
 }: IProps) => {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const { actions } = useGame();
-	// Keep current time in a ref to avoid stale values inside event handlers
+	const engineRef = useRef<RhythmEngine | null>(null);
 	const currentTimeRef = useRef(currentTime);
+	const hitNoteIndexesRef = useRef<Set<number>>(new Set());
+	const gameOverTriggeredRef = useRef<boolean>(false);
+
+	const { actions } = useGame();
 
 	const [dragState, setDragState] = useState<DragState | null>(null);
 	const [hoverCursor, setHoverCursor] = useState<string>("default");
 
-	const engineRef = useRef<RhythmEngine | null>(null);
-
-	// Keep track of which notes were already evaluated to avoid double counting
-	const hitNoteIndexesRef = useRef<Set<number>>(new Set());
-
-	// Flag to prevent multiple game over triggers
-	const gameOverTriggeredRef = useRef<boolean>(false);
-
-	useEffect(() => {
+	const startGame = useCallback(() => {
 		const noteEvents: NoteEvent[] = songNotes.map((n, idx) => ({
 			id: String(idx),
 			keys: [n.note],
 			start: n.time,
 		}));
 		engineRef.current = new RhythmEngine(noteEvents);
-		// reset hits tracking
 		hitNoteIndexesRef.current.clear();
-		// reset game over flag when song changes
 		gameOverTriggeredRef.current = false;
-
-		// Debug: log song info
-		console.log(
-			`Song loaded: ${songNotes.length} notes, last note at ${Math.max(...songNotes.map((n) => n.time)).toFixed(
-				2,
-			)}s`,
-		);
-		if (engineRef.current) {
-			console.log(`Game should end at: ${engineRef.current.getGameEndTime().toFixed(2)}s`);
-		}
 	}, [songNotes]);
+
+	useEffect(() => {
+		startGame();
+	}, [startGame]);
 
 	useEffect(() => {
 		currentTimeRef.current = currentTime;

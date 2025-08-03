@@ -9,3 +9,13 @@ export interface IFallingNote {
 }
 
 export type ActiveKeys = Map<string, { expiry: number; color: string; label: string }>;
+
+export interface DragState {
+	isDragging: boolean;
+	noteIndex: number;
+	startY: number;
+	startTime: number;
+	currentY: number;
+	dragMode: "timing" | "duration-bottom";
+	originalDuration?: number;
+}
