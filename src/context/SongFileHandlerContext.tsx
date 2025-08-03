@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext, createContext } from "react";
 import WaveSurfer from "wavesurfer.js";
+import { useSongEditor } from "./SongEditorContext";
 
-interface UseSongFileHandlerReturn {
+interface SongFileHandlerContextValue {
 	currentTime: number;
 	isPlaying: boolean;
 	audioFile: File | null;
@@ -20,12 +21,13 @@ interface UseSongFileHandlerReturn {
 	};
 }
 
-interface UseSongFileHandlerProps {
-	onError: (error: string) => void;
-	onSuccess: (message: string) => void;
-}
+const SongFileHandlerContext = createContext<SongFileHandlerContextValue | undefined>(undefined);
 
-export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerProps): UseSongFileHandlerReturn => {
+const SongFileHandlerProvider = ({ children }: { children: React.ReactNode }) => {
+	const {
+		actions: { setError, setSuccess },
+	} = useSongEditor();
+
 	// State
 	const [currentTime, setCurrentTime] = useState(0);
 	const [isPlaying, setIsPlaying] = useState(false);
@@ -84,7 +86,7 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 		});
 
 		ws.on("error", (error: Error) => {
-			onError(`Audio error: ${error.message}`);
+			setError(`Audio error: ${error.message}`);
 			setIsPlaying(false);
 		});
 
@@ -132,7 +134,7 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 		if (!file) return;
 
 		if (!file.type.startsWith("audio/")) {
-			onError("Please select a valid audio file");
+			setError("Please select a valid audio file");
 			return;
 		}
 
@@ -154,10 +156,10 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 				wavesurfer.current.load(url);
 			}
 
-			onSuccess("Audio file loaded successfully!");
+			setSuccess("Audio file loaded successfully!");
 		} catch (error) {
 			console.error("Error loading audio file:", error);
-			onError("Failed to load audio file. Please try again.");
+			setError("Failed to load audio file. Please try again.");
 		}
 	};
 
@@ -179,21 +181,21 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 			if (wavesurfer.current) {
 				const url = URL.createObjectURL(file);
 				wavesurfer.current.load(url);
-				
+
 				// Set the imported duration immediately
 				setDuration(importedDuration);
 			}
 
-			onSuccess("Imported audio file loaded successfully!");
+			setSuccess("Imported audio file loaded successfully!");
 		} catch (error) {
 			console.error("Error loading imported audio file:", error);
-			onError("Failed to load imported audio file. Please try again.");
+			setError("Failed to load imported audio file. Please try again.");
 		}
 	};
 
 	const togglePlayback = () => {
 		if (!wavesurfer.current || !audioFile) {
-			onError("Please upload an audio file first");
+			setError("Please upload an audio file first");
 			return;
 		}
 
@@ -211,7 +213,7 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 		setIsPlaying(false);
 	};
 
-	return {
+	const contextValue: SongFileHandlerContextValue = {
 		currentTime,
 		isPlaying,
 		audioFile,
@@ -229,4 +231,17 @@ export const useSongFileHandler = ({ onError, onSuccess }: UseSongFileHandlerPro
 			loadImportedAudioFile,
 		},
 	};
+
+	return <SongFileHandlerContext.Provider value={contextValue}>{children}</SongFileHandlerContext.Provider>;
 };
+
+const useSongFileHandler = () => {
+	const ctx = useContext(SongFileHandlerContext);
+	if (!ctx) {
+		throw new Error("useSongFileHandler must be used within a SongFileHandlerProvider");
+	}
+	return ctx;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export { SongFileHandlerProvider, useSongFileHandler };

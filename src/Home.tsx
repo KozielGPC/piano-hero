@@ -4,6 +4,7 @@ import { GameArea } from "./components/GameArea";
 import { Header } from "./components/Header";
 import { GameProvider } from "./context/GameContext";
 import { SongEditorProvider } from "./context/SongEditorContext";
+import { SongFileHandlerProvider } from "./context/SongFileHandlerContext";
 
 export const Home = () => {
 	return (
@@ -27,7 +28,9 @@ export const Home = () => {
 				<GameArea>
 					<GameProvider>
 						<SongEditorProvider>
-							<GameController />
+							<SongFileHandlerProvider>
+								<GameController />
+							</SongFileHandlerProvider>
 						</SongEditorProvider>
 					</GameProvider>
 				</GameArea>

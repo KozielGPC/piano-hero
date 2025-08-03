@@ -1,28 +1,19 @@
 import { Card, CardContent, Typography, Button, Stack, IconButton, Box } from "@mui/material";
 import { formatTime } from "../../utils";
-import { SongData } from "../../types";
 import { Upload, SkipPrevious, Pause, PlayArrow, Stop, SkipNext } from "@mui/icons-material";
+import { useSongFileHandler } from "../../../../context/SongFileHandlerContext";
+import { useSongEditor } from "../../../../context/SongEditorContext";
 
-interface AudioUploadProps {
-	songData: SongData;
-	handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-	togglePlayback: () => void;
-	skipTime: (seconds: number) => void;
-	currentTime: number;
-	waveformRef: React.RefObject<HTMLDivElement>;
-	isPlaying: boolean;
-	stopPlayback: () => void;
-}
-export const AudioUpload = ({
-	songData,
-	handleFileUpload,
-	togglePlayback,
-	skipTime,
-	currentTime,
-	waveformRef,
-	isPlaying,
-	stopPlayback,
-}: AudioUploadProps) => {
+export const AudioUpload = () => {
+	const { songData } = useSongEditor();
+
+	const {
+		currentTime,
+		isPlaying,
+		waveformRef,
+		actions: { handleFileUpload, togglePlayback, stopPlayback, skipTime },
+	} = useSongFileHandler();
+
 	return (
 		<Card elevation={3} sx={{ mb: 3 }}>
 			<CardContent>

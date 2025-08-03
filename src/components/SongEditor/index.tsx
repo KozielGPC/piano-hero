@@ -3,7 +3,6 @@ import { Box, Typography, IconButton, Alert } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { notes } from "../../utils/constants";
 import { IFallingNote } from "../PianoCanvas/types";
-import { SongData } from "./types";
 import { SongInformation } from "./components/SongInformation";
 import { NotesList } from "./components/NotesList";
 import { ExportControls } from "./components/ExportControls";
@@ -12,7 +11,7 @@ import { NoteSelection } from "./components/NoteSelection";
 import { InteractiveGamePreview } from "./components/InteractiveGamePreview";
 import { AudioUpload } from "./components/AudioUpload";
 import { SongImport } from "./components/SongImport";
-import { useSongFileHandler } from "../../hooks/useSongFileHandler";
+import { useSongFileHandler } from "../../context/SongFileHandlerContext";
 import { useSongEditor } from "../../context/SongEditorContext";
 
 interface SongEditorProps {
@@ -28,22 +27,7 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack }) => {
 		actions: { setError, setSuccess, setSongData },
 	} = useSongEditor();
 
-	const {
-		currentTime,
-		isPlaying,
-		audioFile,
-		duration,
-		waveformRef,
-		actions: { handleFileUpload, togglePlayback, stopPlayback, skipTime, loadImportedAudioFile },
-	} = useSongFileHandler({
-		onError: (errorMessage: string) => {
-			setError(errorMessage);
-		},
-		onSuccess: (successMessage: string) => {
-			setSuccess(successMessage);
-			setTimeout(() => setSuccess(""), 3000);
-		},
-	});
+	const { currentTime, audioFile, duration } = useSongFileHandler();
 
 	useEffect(() => {
 		setSongData((prev) => ({
@@ -52,16 +36,6 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack }) => {
 			duration,
 		}));
 	}, [audioFile, duration]);
-
-	// Handle imported song data
-	const handleImportSong = (importedSongData: SongData) => {
-		setSongData(importedSongData);
-
-		// If there's an audio file, load it properly with WaveSurfer initialization
-		if (importedSongData.audioFile && importedSongData.duration) {
-			loadImportedAudioFile(importedSongData.audioFile, importedSongData.duration);
-		}
-	};
 
 	// Convert editor notes to the format expected by the shared piano canvas
 	const fallingNotes: IFallingNote[] = songData.notes
@@ -103,20 +77,11 @@ const SongEditor: React.FC<SongEditorProps> = ({ onBack }) => {
 				</Alert>
 			)}
 
-			<SongImport onImportSong={handleImportSong} onError={setError} onSuccess={setSuccess} />
+			<SongImport />
 
 			<SongInformation />
 
-			<AudioUpload
-				songData={songData}
-				handleFileUpload={handleFileUpload}
-				togglePlayback={togglePlayback}
-				skipTime={skipTime}
-				currentTime={currentTime}
-				waveformRef={waveformRef}
-				isPlaying={isPlaying}
-				stopPlayback={stopPlayback}
-			/>
+			<AudioUpload />
 
 			<InteractiveGamePreview
 				fallingNotes={fallingNotes}
