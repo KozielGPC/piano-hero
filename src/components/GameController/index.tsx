@@ -11,11 +11,6 @@ import { Loading } from "./components/Stages/Loading";
 const GameController = () => {
 	const { gameState, currentTime, animationRef, actions, prevScoreRef, score, currentSongAudioUrl } = useGame();
 
-	// Debug: log game state changes
-	useEffect(() => {
-		console.log("GameController - gameState changed to:", gameState);
-	}, [gameState]);
-
 	useEffect(() => {
 		if (score && typeof score === "object") {
 			actions.updateAccuracy(score);
@@ -52,8 +47,6 @@ const GameController = () => {
 		};
 	}, [gameState, currentTime, actions, animationRef, currentSongAudioUrl]);
 
-	const renderSongEditorState = () => <SongEditor onBack={() => actions.setGameState("MENU")} />;
-
 	return (
 		<Box
 			display="flex"
@@ -86,7 +79,7 @@ const GameController = () => {
 			{(gameState === "PLAYING" || gameState === "PAUSED") && <Play />}
 			{gameState === "ENDED" && <EndGame />}
 			{gameState === "LOADING" && <Loading />}
-			{gameState === "SONG_EDITOR" && renderSongEditorState()}
+			{gameState === "SONG_EDITOR" && <SongEditor />}
 
 			{gameState === "PAUSED" && (
 				<Box

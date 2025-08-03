@@ -1,17 +1,45 @@
 import { Card, CardContent, Paper, Typography } from "@mui/material";
 import { InteractivePianoCanvas } from "../../../PianoCanvas";
+import { useEffect } from "react";
+import { useSongFileHandler } from "../../../../context/SongFileHandlerContext";
+import { useSongEditor } from "../../../../context/SongEditorContext";
 import { IFallingNote } from "../../../PianoCanvas/types";
+import { notes } from "../../../../utils/constants";
 
 const CANVAS_HEIGHT = 400;
 
-interface InteractiveGamePreviewProps {
-	fallingNotes: IFallingNote[];
-	currentTime: number;
-	selectedNotes: string[];
-}
+export const InteractiveGamePreview = () => {
+	const { currentTime, audioFile, duration } = useSongFileHandler();
+	const {
+		songData,
+		selectedNotes,
+		actions: { setSongData },
+	} = useSongEditor();
+	useEffect(() => {
+		setSongData((prev) => ({
+			...prev,
+			audioFile,
+			duration,
+		}));
+	}, [audioFile, duration]);
 
+	// Convert editor notes to the format expected by the shared piano canvas
+	const fallingNotes: IFallingNote[] = songData.notes
+		.flatMap((n) =>
+			n.keys.map((k) => {
+				const data = notes[k as keyof typeof notes];
+				if (!data) return null;
+				return {
+					note: k,
+					offset: data.offset,
+					type: data.type,
+					time: n.time,
+					duration: n.duration,
+				} as IFallingNote;
+			}),
+		)
+		.filter(Boolean) as IFallingNote[];
 
-export const InteractiveGamePreview = ({ fallingNotes, currentTime, selectedNotes }: InteractiveGamePreviewProps) => {
 	return (
 		<Card elevation={3} sx={{ mb: 3 }}>
 			<CardContent>
