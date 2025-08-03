@@ -53,7 +53,7 @@ const GameContext = createContext<GameContextValue | undefined>(undefined);
 
 const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const [gameState, setGameState] = useState<GameState>("MENU");
-	const [selectedSongId, setSelectedSongId] = useState<string>("interstellar");
+	const [selectedSongId, setSelectedSongId] = useState<string>("interstellar-theme-exported");
 	const [accuracy, setAccuracy] = useState<number>(0);
 	const [combo, setCombo] = useState<number>(0);
 	const [maxCombo, setMaxCombo] = useState<number>(0);

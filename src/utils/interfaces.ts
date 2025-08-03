@@ -1,10 +1,5 @@
 import { NoteType } from "./constants";
 
-export interface IActiveNote {
-	note: string;
-	leftOffset: number;
-}
-
 export interface IScore {
 	correctNotes: number;
 	wrongNotes: number;
@@ -17,16 +12,6 @@ export interface INotes {
 	type: NoteType;
 	displayAftertimeSeconds: number;
 	duration?: number; // Optional for backward compatibility
-}
-
-// Simple MIDI data interface for uploaded songs
-export interface IMidiSongData {
-	name: string;
-	artist?: string;
-	duration: number;
-	notes: INotes[];
-	bpm?: number;
-	timeSignature?: string;
 }
 
 // MIDI Parser interfaces (for the library we're using)
