@@ -4,14 +4,14 @@ export enum NoteType {
 }
 
 export const notes = {
-	Qb: {
+	2: {
 		offset: -13,
 		note: "2",
 		type: NoteType.black,
 		fileName: "Db4.mp3",
 	},
 	Q: { offset: -14, note: "q", type: NoteType.white, fileName: "C4.mp3" },
-	Wb: {
+	3: {
 		offset: -11,
 		note: "3",
 		type: NoteType.black,
@@ -19,23 +19,23 @@ export const notes = {
 	},
 	W: { offset: -12, note: "w", type: NoteType.white, fileName: "D4.mp3" },
 	E: { offset: -10, note: "e", type: NoteType.white, fileName: "E4.mp3" },
-	Rb: {
+	5: {
 		offset: -7,
-		note: "4",
+		note: "5",
 		type: NoteType.black,
 		fileName: "Gb4.mp3",
 	},
 	R: { offset: -8, note: "r", type: NoteType.white, fileName: "F4.mp3" },
-	Tb: {
+	6: {
 		offset: -5,
-		note: "5",
+		note: "6",
 		type: NoteType.black,
 		fileName: "Ab4.mp3",
 	},
 	T: { offset: -6, note: "t", type: NoteType.white, fileName: "G4.mp3" },
-	Ub: {
+	7: {
 		offset: -3,
-		note: "6",
+		note: "7",
 		type: NoteType.black,
 		fileName: "Bb4.mp3",
 	},

@@ -18,9 +18,8 @@ export interface SongEditorContextValue {
 		deleteNote: (noteId: string) => void;
 		setEditingNote: React.Dispatch<React.SetStateAction<EditorNote | null>>;
 		setEditDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-		setNoteDuration: React.Dispatch<React.SetStateAction<number>>;	
-		updateNoteTime: (noteIndex: number, newTime: number, fallingNotes: IFallingNote[]) => void;
-		updateNoteDuration: (noteIndex: number, newDuration: number, fallingNotes: IFallingNote[]) => void;
+		setNoteDuration: React.Dispatch<React.SetStateAction<number>>;
+		updateNote: (noteIndex: number, fallingNotes: IFallingNote[], newTime?: number, newDuration?: number) => void;
 		setError: React.Dispatch<React.SetStateAction<string>>;
 		setSuccess: React.Dispatch<React.SetStateAction<string>>;
 		setSelectedNotes: React.Dispatch<React.SetStateAction<string[]>>;
@@ -71,7 +70,7 @@ const SongEditorProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 		setTimeout(() => setSuccess(""), 2000);
 	};
 
-    const addNoteAtKey = (key: string, time: number) => {
+	const addNoteAtKey = (key: string, time: number) => {
 		const noteData = notes[key as keyof typeof notes];
 		if (!noteData) {
 			setError(`Invalid note key: ${key}`);
@@ -94,22 +93,21 @@ const SongEditorProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 		}));
 	};
 
-    const deleteNote = (noteId: string) => {
+	const deleteNote = (noteId: string) => {
 		setSongData((prev) => ({
 			...prev,
 			notes: prev.notes.filter((note) => note.id !== noteId),
 		}));
 	};
 
-    const updateNoteTime = (noteIndex: number, newTime: number, fallingNotes: IFallingNote[]) => {
+	const updateNote = (noteIndex: number, fallingNotes: IFallingNote[], newTime?: number, newDuration?: number) => {
 		const fallingNoteIndex = noteIndex;
 		if (fallingNoteIndex < 0 || fallingNoteIndex >= fallingNotes.length) return;
 
 		// Find the corresponding editor note
 		const fallingNote = fallingNotes[fallingNoteIndex];
-		const editorNoteIndex = songData.notes.findIndex(note => 
-			note.time === fallingNote.time && 
-			note.keys.includes(fallingNote.note)
+		const editorNoteIndex = songData.notes.findIndex(
+			(note) => note.time === fallingNote.time && note.keys.includes(fallingNote.note),
 		);
 
 		if (editorNoteIndex === -1) return;
@@ -118,7 +116,8 @@ const SongEditorProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 			const newNotes = [...prev.notes];
 			newNotes[editorNoteIndex] = {
 				...newNotes[editorNoteIndex],
-				time: newTime
+				time: newTime || newNotes[editorNoteIndex].time,
+				duration: newDuration || newNotes[editorNoteIndex].duration,
 			};
 			// Sort notes by time after updating
 			newNotes.sort((a, b) => a.time - b.time);
@@ -127,36 +126,6 @@ const SongEditorProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 				notes: newNotes,
 			};
 		});
-
-		// No success message for drag operations - visual feedback is sufficient
-	};
-
-    const updateNoteDuration = (noteIndex: number, newDuration: number, fallingNotes: IFallingNote[]) => {
-		const fallingNoteIndex = noteIndex;
-		if (fallingNoteIndex < 0 || fallingNoteIndex >= fallingNotes.length) return;
-
-		// Find the corresponding editor note
-		const fallingNote = fallingNotes[fallingNoteIndex];
-		const editorNoteIndex = songData.notes.findIndex(note => 
-			note.time === fallingNote.time && 
-			note.keys.includes(fallingNote.note)
-		);
-
-		if (editorNoteIndex === -1) return;
-
-		setSongData((prev) => {
-			const newNotes = [...prev.notes];
-			newNotes[editorNoteIndex] = {
-				...newNotes[editorNoteIndex],
-				duration: newDuration
-			};
-			return {
-				...prev,
-				notes: newNotes,
-			};
-		});
-
-		// No success message for drag operations - visual feedback is sufficient
 	};
 
 	const contextValue: SongEditorContextValue = {
@@ -174,12 +143,11 @@ const SongEditorProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 			setEditingNote,
 			setEditDialogOpen,
 			setNoteDuration,
-			updateNoteTime,
-			updateNoteDuration,
-            setError,
-            setSuccess,
-            setSelectedNotes,
-            setSongData,
+			updateNote,
+			setError,
+			setSuccess,
+			setSelectedNotes,
+			setSongData,
 		},
 	};
 
