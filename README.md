@@ -6,21 +6,16 @@ Piano Hero is a Guitar Hero-inspired rhythm game built for piano. Players must h
 ### Play
 🎮 **[Play Online](https://kozi-piano-hero.vercel.app/)**
 
-### Screenshots
+### Gameplay Video
+https://github.com/user-attachments/assets/654357f4-3b03-4e7c-a511-626d05448bfc
 
-![image](https://github.com/user-attachments/assets/14344ce7-bf87-4f75-964e-ae2ca1ebd978)
+### Piano Editor Video
 
-![image](https://github.com/user-attachments/assets/63d24723-2432-4fc6-b8a9-b6648886800c)
 
-![image](https://github.com/user-attachments/assets/43f6b219-0a64-4057-9343-1fc367fdffd6)
+https://github.com/user-attachments/assets/9d9d9753-cc59-4573-837a-b9a68d47174a
 
-![image](https://github.com/user-attachments/assets/976a1096-3721-45f3-96e4-db0b5a692183)
 
-![image](https://github.com/user-attachments/assets/4ac62a54-f576-4199-894a-1f74052864a0)
-
-![image](https://github.com/user-attachments/assets/b0b095a2-040c-412b-bc44-555bd9366635)
-
-![image](https://github.com/user-attachments/assets/a602d345-c2dd-42d3-b860-82091bdd1022)
+https://github.com/user-attachments/assets/30898e38-dd2e-4844-a138-c7a19f9dd6a4
 
 ## 🏗️ Architecture & Technology Stack
 
