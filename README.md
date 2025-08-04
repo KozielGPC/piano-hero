@@ -136,6 +136,170 @@ Manages game flow through five distinct states:
 - **Score System**: Points awarded based on timing accuracy
 - **Progress Bar**: Visual completion indicator
 
+## 🔧 How The Game Engine Works
+
+### 🎮 Core Game Loop & Timing System
+
+The game operates on a precise timing system using `performance.now()` for millisecond accuracy:
+
+**Time Management** (`src/components/GameController/index.tsx`):
+```javascript
+const start = performance.now() - currentTime * 1000;
+const step = (ts: number) => {
+    actions.setCurrentTime((ts - start) / 1000);
+    animationRef.current = requestAnimationFrame(step);
+};
+```
+
+### 🎵 Note Falling Algorithm
+
+**Core Physics** (`src/components/PianoCanvas/utils.ts`):
+
+The falling notes use a sophisticated position calculation:
+
+```javascript
+const timeUntilNote = noteStartTime - currentTime;
+const fallProgress = (LOOKAHEAD_TIME - timeUntilNote) / LOOKAHEAD_TIME;
+const fallAreaHeight = noteAreaHeight - NOTE_AREA_BOTTOM_PADDING;
+const noteCenterY = fallProgress * fallAreaHeight + NOTE_AREA_TOP_PADDING;
+```
+
+**How it works**:
+1. **`LOOKAHEAD_TIME`** = 4 seconds - notes become visible 4 seconds before they should be hit
+2. **`fallProgress`** ranges from 0 (note appears) to 1 (note reaches piano)
+3. **Position mapping**: Linear interpolation between top of canvas and piano keys
+4. **Real-time updates**: 60fps via `requestAnimationFrame`
+
+### 🎯 Timing Windows & Collision Detection
+
+**Rhythm Engine** (`src/engine/RhythmEngine.ts`):
+
+The game uses a sophisticated multi-tier timing system:
+
+```javascript
+// Timing judgments (in seconds):
+if (delta >= 0 && delta <= 0.2) judgement = "perfect";      // 300 points
+else if (absDelta <= 0.3) judgement = "great";              // 200 points  
+else if (absDelta <= 0.4) judgement = "good";               // 100 points
+else if (delta >= -early && delta <= late) judgement = "hit"; // 50 points
+else judgement = "miss";                                      // 0 points
+```
+
+**Per-Key Indexing**: The engine maintains separate note queues for each piano key for optimal performance:
+- `Map<string, number[]>` - Maps each key to its note indices
+- `Map<string, number>` - Tracks next unprocessed note per key
+- Prevents double-hits and optimizes lookup time
+
+### 🎨 Canvas Rendering Pipeline
+
+**Multi-Layer Rendering** (`src/components/PianoCanvas/utils.ts`):
+
+1. **Background Layer**: Canvas background + piano strip
+2. **Note Layer**: Falling notes with collision shapes
+3. **Piano Layer**: Interactive keys with hit feedback
+4. **UI Layer**: Score feedback and labels
+
+**Optimized Rendering**:
+- **Viewport Culling**: Only renders visible notes
+- **Partial Redraws**: Piano keys redraw separately via `redrawPianoStrip()`
+- **Color-Coded Feedback**: Instant visual feedback based on timing accuracy
+
+```javascript
+// Note visibility optimization
+const noteIsVisible = currentTime >= noteStartTime - LOOKAHEAD_TIME && 
+                     currentTime <= noteEndTime + 1;
+const noteIsInViewport = noteCenterY >= -NOTE_AREA_BOTTOM_PADDING && 
+                        noteCenterY <= height;
+```
+
+### 🎹 Piano Key Mapping & Audio System
+
+**Keyboard Layout** (`src/utils/constants.ts`):
+- **88 Piano Keys** mapped to computer keyboard
+- **White Keys**: Letters (Q,W,E,R,T,Y,U,I,O,P, etc.)
+- **Black Keys**: Numbers (2,3,5,6,7, etc.)
+- **Offset System**: Each key has a precise visual offset for proper spacing
+
+**Audio Architecture**:
+- **Individual Note Sounds**: 88 separate MP3 files in `/public/sounds/`
+- **Audio Caching**: `Map<string, HTMLAudioElement>` prevents reload delays
+- **Background Audio Sync**: WaveSurfer.js provides precision audio timing
+- **Smart Audio Mixing**: Piano sounds only play for wrong notes when background audio is active
+
+### 🎮 Game State Machine
+
+**State Transitions** (`src/context/GameContext.tsx`):
+```
+MENU → LOADING → PLAYING ⇄ PAUSED → ENDED
+  ↓                                    ↑
+SONG_EDITOR ←→ ←→ ←→ ←→ ←→ ←→ ←→ ←→ ←→ ←→
+```
+
+**State Management**: Each state has specific logic:
+- **PLAYING**: Active game loop, timing engine, collision detection
+- **PAUSED**: Suspends timing, preserves state
+- **ENDED**: Score calculation, progress tracking
+
+### 🏆 Scoring & Combo System
+
+**Real-time Score Calculation**:
+```javascript
+// Accuracy: (correct / total) * 100
+const accuracy = totalNotes > 0 ? (correctNotes / totalNotes) * 100 : 0;
+
+// Combo Logic: Resets on wrong/miss, increments on correct
+if (score.wrongNotes > prevScore.wrongNotes) setCombo(0);
+else if (score.correctNotes > prevScore.correctNotes) {
+    setCombo(prevCombo => {
+        const newCombo = prevCombo + 1;
+        setMaxCombo(prevMax => Math.max(prevMax, newCombo));
+        return newCombo;
+    });
+}
+```
+
+### 🎼 Song Editor Implementation
+
+**Interactive Note Editing**:
+1. **Drag & Drop**: Converts mouse Y-position to time using `getTimeFromY()`
+2. **Duration Editing**: Bottom-edge dragging adjusts note length
+3. **Real-time Preview**: Instant visual feedback during editing
+4. **Audio Synchronization**: WaveSurfer provides waveform visualization
+
+**Data Flow**:
+```
+User Input → Canvas Coordinates → Time Conversion → Note Update → Re-render
+```
+
+### 🔧 Performance Optimizations
+
+**Rendering Optimizations**:
+- **Selective Redraws**: Only piano strip updates for key presses
+- **Object Pooling**: Reuses canvas contexts and audio elements  
+- **Viewport Culling**: Skips off-screen note calculations
+- **Efficient Hit Detection**: Spatial partitioning for note lookups
+
+**Memory Management**:
+- **Audio Caching**: Prevents repeated file loads
+- **Context Cleanup**: Proper cleanup of timers and event listeners
+- **Component Memoization**: Reduces unnecessary React re-renders
+
+### 🧮 Mathematical Models
+
+**Note Position Formula**:
+```
+Y = fallProgress × (canvasHeight - pianoHeight - padding) + topPadding
+fallProgress = (lookaheadTime - timeUntilNote) / lookaheadTime
+timeUntilNote = noteStartTime - currentGameTime
+```
+
+**Timing Accuracy**:
+```
+delta = userInputTime - noteStartTime
+judgement = f(|delta|, timingWindows)
+points = judgementMap[judgement].points
+```
+
 ## 📁 Project Structure
 
 ```
